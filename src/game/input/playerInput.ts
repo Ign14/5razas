@@ -9,7 +9,9 @@ import type { PlayerCommand } from '../../core/simulation/worldSimulation.ts';
 const MOVE_ACTIONS = ['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const;
 /** Acciones activadas por teclado; el ataque básico se activa con el clic izquierdo. */
 const KEY_ACTIONS = ['power1', 'power2', 'power3', 'final', 'dodge'] as const satisfies readonly ActionSlot[];
-type BindingName = (typeof MOVE_ACTIONS)[number] | (typeof KEY_ACTIONS)[number];
+/** Ranuras rápidas de consumibles (Q, F) y apertura del inventario. */
+const OTHER_ACTIONS = ['quick1', 'quick2', 'inventory'] as const;
+type BindingName = (typeof MOVE_ACTIONS)[number] | (typeof KEY_ACTIONS)[number] | (typeof OTHER_ACTIONS)[number];
 export type Bindings = Readonly<Record<BindingName, readonly string[]>>;
 
 /** Valida las asignaciones contra los nombres de Phaser.Input.Keyboard.KeyCodes. */
@@ -18,7 +20,7 @@ export function parseBindings(raw: unknown, source = 'data/controls.json'): Bind
   const root = issues.record(raw, '$') ?? {};
   const known = Phaser.Input.Keyboard.KeyCodes as unknown as Record<string, number>;
   const result: Partial<Record<BindingName, string[]>> = {};
-  for (const action of [...MOVE_ACTIONS, ...KEY_ACTIONS]) {
+  for (const action of [...MOVE_ACTIONS, ...KEY_ACTIONS, ...OTHER_ACTIONS]) {
     const keys = issues.array(root[action], `$.${action}`) ?? [];
     if (keys.length === 0) issues.add(`$.${action}`, 'debe tener al menos una tecla');
     result[action] = keys.filter((k, i): k is string => {
@@ -86,6 +88,12 @@ export class PlayerInput {
       pressed = this.clickQueued;
     }
     this.clickQueued = false;
-    return { move, aim, action, pressed };
+    const quickSlot = this.justDown('quick1') ? 0 : this.justDown('quick2') ? 1 : null;
+    return { move, aim, action, pressed, quickSlot };
+  }
+
+  /** true una vez por pulsación de la tecla de inventario. */
+  inventoryPressed(): boolean {
+    return this.justDown('inventory');
   }
 }

@@ -15,6 +15,17 @@
     "crit": 0.1,
     "evasion": 0.05
   },
+  "statsPerLevel": {
+    "life": 12,
+    "energy": 3,
+    "attack": 1.5,
+    "power": 1.2,
+    "defense": 1,
+    "resistance": 0.8,
+    "attackRate": 0.01,
+    "crit": 0.002,
+    "evasion": 0.001
+  },
   "energyRegen": 7,
   "invulnerabilityOnHit": 0.6,
   "hurtboxRadius": 0.35,

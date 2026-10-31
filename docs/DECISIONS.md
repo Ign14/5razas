@@ -62,3 +62,22 @@ durante el combate.
 
 ## D-015 — Zonas de aparición fuera del alcance de detección del punto de inicio
 Una zona cercana provocaba muertes en bucle al reaparecer. Una prueba verifica la distancia mínima.
+
+## D-016 — PlayerCharacter separado de la simulación (2026-10-31)
+Progresión, inventario, equipo y consumibles viven en `PlayerCharacter` (core). `WorldSimulation` solo orquesta
+(XP por muertes, botín, sincronización de atributos). Evita una clase monolítica y facilita el guardado de la Fase 6.
+
+## D-017 — Curva de XP polinómica configurable
+`base + factor × (L−1)^exponent` (15, 8, 1,4): unas 70 criaturas hasta el nivel 12 con las XP actuales. El
+balance se ajusta en `progression.json`; misiones y jefe completarán la progresión del vertical slice.
+
+## D-018 — Botín en el suelo con recogida automática
+Más legible que pasarlo directo al inventario y no requiere tecla de interacción (E queda para objetos
+interactivos de la Fase 4). Los objetos que no caben se quedan en el suelo; nunca se pierden en silencio.
+
+## D-019 — El inventario pausa el juego
+Juego de un jugador: abrir el inventario detiene la simulación (no avanza el tiempo ni actúan las criaturas).
+Las pulsaciones y clics hechos sobre el inventario se descartan para que no se conviertan en ataques al cerrar.
+
+## D-020 — Las habilidades se desbloquean en los niveles 2 a 5
+Introduce las acciones de forma gradual en los primeros minutos. Ataque básico y evasión desde el nivel 1.

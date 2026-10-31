@@ -5,11 +5,13 @@ import { ACTION_SLOTS } from '../../core/professions/profession.ts';
 import { PLAYER_ID, type SimEvent } from '../../core/simulation/worldSimulation.ts';
 import type { GameContent } from '../content.ts';
 import { CreatureView } from '../entities/creatureView.ts';
+import { DropView } from '../entities/dropView.ts';
 import { PlayerView } from '../entities/playerView.ts';
 import { PlayerInput, parseBindings } from '../input/playerInput.ts';
 import { CombatEffects } from '../rendering/combatEffects.ts';
 import { WorldRenderer } from '../rendering/worldRenderer.ts';
 import { GameSession } from '../session.ts';
+import type { InventoryScene } from './InventoryScene.ts';
 import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
 
 /** Escena de exploración y combate: orquesta entrada → simulación (core) → representación. */
@@ -20,6 +22,8 @@ export class GameScene extends Phaser.Scene {
   private effects!: CombatEffects;
   private world!: WorldRenderer;
   private readonly creatureViews = new Map<string, CreatureView>();
+  private readonly dropViews = new Map<string, DropView>();
+  private content!: GameContent;
 
   constructor() {
     super(SceneKeys.Game);
@@ -27,9 +31,11 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     const content = this.registry.get(REGISTRY_CONTENT) as GameContent;
+    this.content = content;
     const map = content.map;
     this.session = new GameSession(content);
     this.creatureViews.clear();
+    this.dropViews.clear();
 
     this.world = new WorldRenderer(this, map);
     this.effects = new CombatEffects(this, map.iso);
@@ -48,13 +54,16 @@ export class GameScene extends Phaser.Scene {
     exposeDebug(this.session);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scene.stop(SceneKeys.Hud);
+      this.scene.stop(SceneKeys.Inventory);
     });
   }
 
   override update(_time: number, deltaMs: number): void {
     const sim = this.session.sim;
+    // La lectura se hace siempre, para consumir pulsaciones y clics hechos sobre el inventario.
     const cmd = this.playerInput.read(sim.player.position);
-    const events = this.session.update(deltaMs / 1000, cmd);
+    if (this.playerInput.inventoryPressed()) this.toggleInventory();
+    const events = this.session.paused ? this.session.flush() : this.session.update(deltaMs / 1000, cmd);
     for (const e of events) this.handleEvent(e);
 
     this.playerView.sync(this.session.player, sim.player, sim.time);
@@ -62,6 +71,14 @@ export class GameScene extends Phaser.Scene {
     for (const [id, view] of this.creatureViews) {
       const c = sim.creatures.get(id);
       if (c) view.sync(c, sim.time);
+    }
+  }
+
+  private toggleInventory(): void {
+    if (this.scene.isActive(SceneKeys.Inventory)) {
+      (this.scene.get(SceneKeys.Inventory) as InventoryScene).close();
+    } else if (this.session.sim.player.alive) {
+      this.scene.launch(SceneKeys.Inventory, { session: this.session });
     }
   }
 
@@ -111,6 +128,18 @@ export class GameScene extends Phaser.Scene {
         if (e.xp > 0) this.effects.floatText(e.position, `+${e.xp} XP`, '#9fe870', true);
         break;
       }
+      case 'drop-spawned':
+        this.dropViews.set(e.drop.id, new DropView(this, e.drop, this.content.items, this.session.map.iso));
+        break;
+      case 'drop-collected':
+      case 'drop-expired':
+        this.dropViews.get(e.id)?.remove(e.type === 'drop-collected');
+        this.dropViews.delete(e.id);
+        break;
+      case 'level-up':
+        this.effects.floatText(this.session.sim.player.position, `¡Nivel ${e.level}!`, '#ffd84a', true);
+        this.cameras.main.flash(250, 255, 230, 140);
+        break;
       default:
         break;
     }
@@ -141,6 +170,11 @@ function exposeDebug(session: GameSession): void {
     cooldowns: () =>
       Object.fromEntries(ACTION_SLOTS.map((s) => [s, sim.player.cooldownRemaining(sim.abilityFor(s).id, sim.time)])),
     xp: () => sim.xp,
+    level: () => sim.character.level,
+    inventory: () => sim.character.inventory.contents.flatMap((s) => (s ? [{ ...s }] : [])),
+    equipment: () => sim.character.equipment.toJSON(),
+    paused: () => session.paused,
+    drops: () => [...sim.drops.all()].map((d) => ({ itemId: d.itemId, x: d.position.x, y: d.position.y })),
     mapId: session.map.id,
   };
 }

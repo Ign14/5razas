@@ -1,0 +1,23 @@
+{
+  "$comment": "Conjuntos de equipamiento del MVP (GAME_DESIGN §11: dos conjuntos completos, sets I y II). Bonificaciones por número de piezas equipadas.",
+  "sets": [
+    {
+      "id": "corteza", "name": "Corteza", "tier": 1, "minLevel": 1,
+      "pieces": ["hoja-de-corteza", "yelmo-de-corteza", "peto-de-corteza", "grebas-de-corteza", "botas-de-corteza"],
+      "bonuses": [
+        { "pieces": 2, "modifiers": [{ "stat": "resistance", "op": "add", "value": 4 }] },
+        { "pieces": 3, "modifiers": [{ "stat": "life", "op": "mul", "value": 1.06 }] },
+        { "pieces": 5, "modifiers": [{ "stat": "attack", "op": "mul", "value": 1.08 }, { "stat": "crit", "op": "add", "value": 0.03 }] }
+      ]
+    },
+    {
+      "id": "raiz-profunda", "name": "Raíz profunda", "tier": 2, "minLevel": 12,
+      "pieces": ["hoja-de-raiz", "yelmo-de-raiz", "peto-de-raiz", "grebas-de-raiz", "botas-de-raiz"],
+      "bonuses": [
+        { "pieces": 2, "modifiers": [{ "stat": "resistance", "op": "add", "value": 10 }] },
+        { "pieces": 3, "modifiers": [{ "stat": "life", "op": "mul", "value": 1.1 }] },
+        { "pieces": 5, "modifiers": [{ "stat": "attack", "op": "mul", "value": 1.12 }, { "stat": "power", "op": "mul", "value": 1.1 }, { "stat": "crit", "op": "add", "value": 0.05 }] }
+      ]
+    }
+  ]
+}

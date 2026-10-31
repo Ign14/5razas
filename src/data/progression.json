@@ -1,0 +1,13 @@
+{
+  "$comment": "Progresión (GAME_DESIGN §7). XP para pasar de L a L+1 = round(base + factor × (L−1)^exponent). Balance provisional, ajustable sin tocar código.",
+  "maxLevel": 100,
+  "curve": { "base": 15, "factor": 8, "exponent": 1.4 },
+  "stages": [
+    { "id": "novato", "name": "Novato", "minLevel": 1 },
+    { "id": "profesion-1", "name": "Profesión I", "minLevel": 22 },
+    { "id": "profesion-senior", "name": "Profesión Senior", "minLevel": 40 },
+    { "id": "ascension", "name": "Ascensión: Dios", "minLevel": 100 }
+  ],
+  "creatureXpPerLevel": 0.5,
+  "fullHealOnLevelUp": true
+}

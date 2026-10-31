@@ -6,6 +6,11 @@ interface FiveRazasDebug {
   creatures(): { id: string; x: number; y: number; hp: number }[];
   cooldowns(): Record<string, number>;
   xp(): number;
+  level(): number;
+  inventory(): { itemId: string; quantity: number }[];
+  equipment(): Record<string, string>;
+  paused(): boolean;
+  drops(): { itemId: string; x: number; y: number }[];
   readonly mapId: string;
 }
 

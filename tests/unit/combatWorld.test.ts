@@ -13,6 +13,7 @@ function setup(rng = NO_LUCK) {
     team: 'player',
     position: { x: 50, y: 50 },
     stats: { ...baseStats, attack: 20, power: 20 },
+    level: 10, // Todas las habilidades del Guardián desbloqueadas.
     poise: Infinity,
     energyRegen: 0,
   });
@@ -56,7 +57,7 @@ describe('CombatWorld — uso de habilidades', () => {
     hero.energy = 100;
     expect(world.useAbility('hero', whirl, { x: 1, y: 0 }).ok).toBe(true);
     expect(hero.energy).toBe(100 - whirl.energyCost);
-    const future: AbilityDefinition = { ...strike, id: 'x', unlockLevel: 5 };
+    const future: AbilityDefinition = { ...strike, id: 'x', unlockLevel: 50 };
     run(world, 1);
     expect(world.useAbility('hero', future, { x: 1, y: 0 })).toEqual({ ok: false, reason: 'locked' });
   });

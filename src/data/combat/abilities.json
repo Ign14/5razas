@@ -1,5 +1,5 @@
 {
-  "$comment": "Habilidades (GAME_DESIGN §6.1-6.2). Nombres y efectos provisionales y completamente ficticios. Distancias en celdas, tiempos en segundos. unlockLevel = 1 hasta que la Fase 3 defina la curva de desbloqueo.",
+  "$comment": "Habilidades (GAME_DESIGN §6.1-6.2). Nombres y efectos provisionales y completamente ficticios. Distancias en celdas, tiempos en segundos. unlockLevel: nivel en que se desbloquea (ver progression.json).",
   "abilities": [
     {
       "id": "guardian-strike", "name": "Golpe del Guardián",
@@ -17,7 +17,7 @@
       "area": { "shape": "line", "length": 0.6, "width": 1.1 },
       "energyCost": 20, "cooldown": 5, "windup": 0, "hits": 1, "hitInterval": 0, "knockback": 1.0,
       "dash": { "distance": 3.2, "duration": 0.2, "invulnerable": false }, "applyStatus": null,
-      "animation": "dash", "vfx": "charge", "unlockLevel": 1, "compatibleModifiers": ["element"]
+      "animation": "dash", "vfx": "charge", "unlockLevel": 2, "compatibleModifiers": ["element"]
     },
     {
       "id": "guardian-whirl", "name": "Corte Circular",
@@ -26,7 +26,7 @@
       "area": { "shape": "circle", "radius": 2.0 },
       "energyCost": 25, "cooldown": 6, "windup": 0.12, "hits": 1, "hitInterval": 0, "knockback": 0.7,
       "dash": null, "applyStatus": null,
-      "animation": "spin", "vfx": "whirl", "unlockLevel": 1, "compatibleModifiers": ["element"]
+      "animation": "spin", "vfx": "whirl", "unlockLevel": 3, "compatibleModifiers": ["element"]
     },
     {
       "id": "guardian-ward", "name": "Protección del Bosque",
@@ -35,7 +35,7 @@
       "area": { "shape": "none" },
       "energyCost": 30, "cooldown": 14, "windup": 0.1, "hits": 0, "hitInterval": 0, "knockback": 0,
       "dash": null, "applyStatus": { "statusId": "protection", "target": "self", "chance": 1 },
-      "animation": "cast", "vfx": "barrier", "unlockLevel": 1, "compatibleModifiers": []
+      "animation": "cast", "vfx": "barrier", "unlockLevel": 4, "compatibleModifiers": []
     },
     {
       "id": "guardian-tempest", "name": "Tempestad Ancestral",
@@ -44,7 +44,7 @@
       "area": { "shape": "circle", "radius": 3.2 },
       "energyCost": 60, "cooldown": 30, "windup": 0.35, "hits": 5, "hitInterval": 0.25, "knockback": 0.25,
       "dash": null, "applyStatus": null,
-      "animation": "cast", "vfx": "tempest", "unlockLevel": 1, "compatibleModifiers": ["element"]
+      "animation": "cast", "vfx": "tempest", "unlockLevel": 5, "compatibleModifiers": ["element"]
     },
     {
       "id": "guardian-dodge", "name": "Evasión",

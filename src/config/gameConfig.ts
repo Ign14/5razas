@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BootScene } from '../game/scenes/BootScene.ts';
 import { GameScene } from '../game/scenes/GameScene.ts';
 import { HudScene } from '../game/scenes/HudScene.ts';
+import { InventoryScene } from '../game/scenes/InventoryScene.ts';
 import { MenuScene } from '../game/scenes/MenuScene.ts';
 
 export function createGameConfig(parent: string): Phaser.Types.Core.GameConfig {
@@ -17,6 +18,6 @@ export function createGameConfig(parent: string): Phaser.Types.Core.GameConfig {
       height: 720,
     },
     fps: { target: 60 },
-    scene: [BootScene, MenuScene, GameScene, HudScene],
+    scene: [BootScene, MenuScene, GameScene, HudScene, InventoryScene],
   };
 }

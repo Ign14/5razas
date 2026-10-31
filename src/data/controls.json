@@ -8,5 +8,8 @@
   "power2": ["TWO"],
   "power3": ["THREE"],
   "final": ["R"],
-  "dodge": ["SPACE"]
+  "dodge": ["SPACE"],
+  "quick1": ["Q"],
+  "quick2": ["F"],
+  "inventory": ["I"]
 }

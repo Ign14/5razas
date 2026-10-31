@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CreatureBrain } from '../../src/core/ai/creatureBrain.ts';
 import { createRng } from '../../src/core/math/random.ts';
+import { creatureXp } from '../../src/core/progression/progression.ts';
 import {
   PLAYER_ID,
   PLAYER_RESPAWN_SECONDS,
@@ -12,7 +13,7 @@ import {
 import { loadTestContent, makeCombatant } from './helpers.ts';
 
 const content = loadTestContent();
-const IDLE: PlayerCommand = { move: { x: 0, y: 0 }, aim: null, action: null, pressed: false };
+const IDLE: PlayerCommand = { move: { x: 0, y: 0 }, aim: null, action: null, pressed: false, quickSlot: null };
 const DT = 1 / 60;
 
 function runSim(sim: WorldSimulation, seconds: number, cmd: (t: number) => PlayerCommand = () => IDLE): SimEvent[] {
@@ -67,6 +68,18 @@ describe('WorldSimulation con el contenido real', () => {
     expect(validateContentReferences(broken)).toEqual([expect.stringContaining('"nope"')]);
   });
 
+  it('detecta botín, conjuntos y equipo inicial con referencias rotas', () => {
+    const brokenLoot = {
+      ...content,
+      lootTables: { all: new Map([['thorn-sprout-common', { id: 'thorn-sprout-common', entries: [{ itemId: 'fantasma', chance: 1, min: 1, max: 1 }] }]]), get: (id: string) => content.lootTables.get(id) },
+    };
+    const problems = validateContentReferences(brokenLoot);
+    expect(problems).toContainEqual(expect.stringContaining('"fantasma"'));
+    expect(problems).toContainEqual(expect.stringContaining('tabla de botín "ash-moth-common" inexistente'));
+    const badStart = { ...content, character: { ...content.character, startingEquipment: ['tonico-vital'] } };
+    expect(validateContentReferences(badStart)).toContainEqual(expect.stringContaining('no es equipable'));
+  });
+
   it('hace aparecer las criaturas de todas las zonas del mapa', () => {
     const sim = new WorldSimulation(content, 7);
     const expected = content.map.spawnZones.reduce((n, z) => n + z.count, 0);
@@ -96,8 +109,9 @@ describe('WorldSimulation con el contenido real', () => {
     const aim = { x: 1, y: 0 };
     const events = runSim(sim, 0.3, (t) => ({ ...IDLE, aim, action: t === 0 ? 'basic' : null, pressed: t === 0 }));
     const defeated = events.find((e) => e.type === 'defeated');
-    expect(defeated).toMatchObject({ id: victim.id, creatureId: victim.def.id, xp: victim.def.xpReward });
-    expect(sim.xp).toBe(victim.def.xpReward);
+    const xp = creatureXp(content.progression, victim.def.xpReward, victim.level);
+    expect(defeated).toMatchObject({ id: victim.id, creatureId: victim.def.id, xp });
+    expect(sim.xp).toBe(xp);
     expect(sim.creatures.has(victim.id)).toBe(false);
 
     // Alejar al jugador del área para permitir la reaparición.
@@ -123,6 +137,7 @@ describe('WorldSimulation con el contenido real', () => {
 
   it('reporta acciones fallidas (energía insuficiente) sin reportar el ataque básico', () => {
     const sim = new WorldSimulation(content, 1);
+    sim.addXp(1000); // Desbloquear todas las habilidades.
     sim.player.energy = 0;
     const events = sim.update(DT, { ...IDLE, action: 'final', pressed: true });
     expect(events).toContainEqual({ type: 'action-failed', slot: 'final', reason: 'energy' });
@@ -133,6 +148,7 @@ describe('WorldSimulation con el contenido real', () => {
 
   it('almacena una acción pulsada mientras el personaje está ocupado', () => {
     const sim = new WorldSimulation(content, 1);
+    sim.addXp(1000);
     sim.update(DT, { ...IDLE, action: 'power2', pressed: true }); // Corte Circular: ocupado durante su preparación.
     sim.update(DT, { ...IDLE, action: 'power3', pressed: true }); // Pulsado durante la preparación.
     expect(sim.player.cooldownRemaining('guardian-ward', sim.time)).toBe(0);
@@ -157,16 +173,83 @@ describe('WorldSimulation con el contenido real', () => {
   it('la evasión sigue la dirección de movimiento', () => {
     const sim = new WorldSimulation(content, 1);
     const start = sim.player.position;
-    runSim(sim, 0.3, (t) => ({ move: { x: 1, y: 0 }, aim: { x: -1, y: 0 }, action: t === 0 ? 'dodge' : null, pressed: t === 0 }));
+    runSim(sim, 0.3, (t) => ({ ...IDLE, move: { x: 1, y: 0 }, aim: { x: -1, y: 0 }, action: t === 0 ? 'dodge' : null, pressed: t === 0 }));
     // Derecha en pantalla = +x, -y en celdas.
     expect(sim.player.position.x).toBeGreaterThan(start.x + 1);
     expect(sim.player.position.y).toBeLessThan(start.y - 1);
   });
 
+  it('ciclo de progresión: derrotar → XP → subir de nivel (curación completa) → botín → recoger', () => {
+    // Semilla con botín garantizado: se fuerza con una tabla de prueba de probabilidad 1.
+    const guaranteed = {
+      ...content,
+      lootTables: {
+        all: content.lootTables.all,
+        get: () => ({ id: 't', entries: [{ itemId: 'espina-dura', chance: 1, min: 2, max: 2 }] }),
+      },
+    };
+    const sim = new WorldSimulation(guaranteed, 3);
+    const [victim] = sim.creatures.values();
+    if (!victim) throw new Error('sin criaturas');
+    const startLife = sim.player.stats.life;
+    sim.player.hp = 10;
+    victim.combatant.position = { x: sim.player.position.x + 1, y: sim.player.position.y };
+    victim.combatant.hp = 1;
+    const events = runSim(sim, 0.3, (t) => ({ ...IDLE, aim: { x: 1, y: 0 }, action: t === 0 ? 'basic' : null, pressed: t === 0 }));
+
+    expect(events.some((e) => e.type === 'xp-gained')).toBe(true);
+    const up = events.find((e) => e.type === 'level-up');
+    expect(up).toMatchObject({ level: 2, stage: 'Novato', unlockedAbilities: ['guardian-charge'] });
+    expect(sim.player.level).toBe(2);
+    expect(sim.player.stats.life).toBe(startLife + content.profession.statsPerLevel.life);
+    expect(sim.player.hp).toBe(sim.player.stats.life); // curación al subir de nivel
+
+    const spawned = events.find((e) => e.type === 'drop-spawned');
+    if (spawned?.type !== 'drop-spawned') throw new Error('no hubo botín');
+    // Caminar hasta el objeto: se mueve al jugador directamente sobre él.
+    sim.player.position = spawned.drop.position;
+    const later = runSim(sim, 0.05);
+    expect(later).toContainEqual(expect.objectContaining({ type: 'drop-collected', itemId: 'espina-dura', quantity: 2 }));
+    expect(sim.character.inventory.count('espina-dura')).toBe(2);
+  });
+
+  it('equipar desde la simulación actualiza los atributos de combate', () => {
+    const sim = new WorldSimulation(content, 1);
+    const before = sim.player.stats.defense;
+    sim.character.inventory.add('peto-de-corteza', 1);
+    const index = sim.character.inventory.contents.findIndex((s) => s?.itemId === 'peto-de-corteza');
+    expect(sim.equip(index)).toEqual({ ok: true });
+    expect(sim.player.stats.defense).toBe(before + 5);
+    expect(sim.drainEvents()).toContainEqual({ type: 'equipment-changed' });
+    expect(sim.unequip('chest')).toEqual({ ok: true });
+    expect(sim.player.stats.defense).toBe(before);
+  });
+
+  it('equipo inicial, inventario inicial y ranuras rápidas (Q/F)', () => {
+    const sim = new WorldSimulation(content, 1);
+    expect(sim.character.equipment.get('weapon')).toBe('hoja-de-corteza');
+    expect(sim.character.quickSlots).toEqual(['tonico-vital', 'tonico-energia']);
+    sim.player.hp = 20;
+    const events = sim.update(DT, { ...IDLE, quickSlot: 0 });
+    expect(events).toContainEqual({ type: 'item-used', itemId: 'tonico-vital' });
+    expect(sim.player.hp).toBe(65);
+    expect(sim.character.inventory.count('tonico-vital')).toBe(2);
+  });
+
+  it('las criaturas aparecen con niveles dentro de su rango y atributos escalados', () => {
+    const sim = new WorldSimulation(content, 21);
+    for (const c of sim.creatures.values()) {
+      const [min, max] = c.def.levelRange;
+      expect(c.level).toBeGreaterThanOrEqual(min);
+      expect(c.level).toBeLessThanOrEqual(max);
+      expect(c.combatant.stats.life).toBe(c.def.stats.life + c.def.statsPerLevel.life * (c.level - 1));
+    }
+  });
+
   it('es determinista con la misma semilla', () => {
     const play = (seed: number) => {
       const sim = new WorldSimulation(content, seed);
-      runSim(sim, 5, (t) => ({ move: { x: Math.sin(t), y: Math.cos(t) }, aim: { x: 1, y: 0 }, action: 'basic', pressed: false }));
+      runSim(sim, 5, (t) => ({ ...IDLE, move: { x: Math.sin(t), y: Math.cos(t) }, aim: { x: 1, y: 0 }, action: 'basic', pressed: false }));
       return [...sim.creatures.values()].map((c) => [c.id, c.combatant.position.x.toFixed(6), c.combatant.hp]);
     };
     expect(play(42)).toEqual(play(42));

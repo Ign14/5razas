@@ -28,6 +28,8 @@ Node ≥ 22.12.
 | Poderes 1, 2 y 3 | Teclas 1, 2, 3 |
 | Habilidad final | R |
 | Evasión | Espacio |
+| Consumibles rápidos | Q, F |
+| Inventario y equipo | I (Esc para cerrar) |
 | Comenzar partida | ENTER o clic |
 
 Las teclas se configuran en `src/data/controls.json`.

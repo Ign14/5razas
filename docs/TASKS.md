@@ -1,5 +1,21 @@
 # Tareas
 
+## Hecho — 2026-10-31 (Fase 3: progresión)
+
+- [x] Curva de XP configurable, niveles 1–100, etapas Novato / Profesión I / Senior / Ascensión.
+- [x] Crecimiento de atributos por nivel (profesión y criaturas) y curación al subir de nivel.
+- [x] Desbloqueo de habilidades por nivel con aviso en pantalla.
+- [x] Criaturas con nivel aleatorio en su rango y XP escalada por nivel.
+- [x] Catálogo de 15 objetos (materiales, consumibles, accesorio y dos conjuntos completos) validado por datos.
+- [x] Inventario de 30 ranuras con apilamiento y filtros por categoría.
+- [x] Equipamiento en 6 ranuras, requisitos de nivel y bonificaciones de conjunto (2/3/5 piezas).
+- [x] Tablas de botín, objetos en el suelo con recogida automática y caducidad.
+- [x] Consumibles (vida/energía) con recuperación compartida y ranuras rápidas Q/F.
+- [x] HUD: nivel, etapa, barra de XP, bloqueos por nivel, notificaciones, aviso de nivel.
+- [x] Pantalla de inventario (I/Esc) que pausa el juego.
+- [x] Pruebas: 99 unitarias y 4 E2E.
+
+
 ## Hecho — 2026-10-31 (Fase 2: combate)
 
 - [x] Atributos (§4.2) con modificadores y validación.
@@ -38,8 +54,10 @@
 
 ## Pendiente — siguiente
 
-- [ ] **Fase 3 — Progresión**: tabla de XP por curva, niveles y crecimiento de atributos, `unlockLevel` real,
-      inventario, objetos, tablas de botín (las `lootTable` ya están referenciadas), equipamiento (2 sets) y bonificaciones.
+- [ ] **Fase 4 — Ecosistema**: fauna real del bioma (aprobada) con comportamientos huidizo/neutral/territorial,
+      10 plantas ficticias, recolección (tecla E), recursos, aparición por condiciones.
+- [ ] Reordenar el inventario arrastrando objetos (hoy la API `swap` existe pero no hay interfaz).
+- [ ] Descartar objetos desde el inventario.
 - [ ] Animaciones de ataque propias del personaje (hoy solo idle/caminar + efectos).
 - [ ] Separación entre criaturas (evitar que se superpongan).
 

@@ -5,6 +5,7 @@ import {
   createPlaceholderTextures,
   createPlayerAnimations,
 } from '../rendering/placeholderTextures.ts';
+import { createItemIcons } from '../rendering/itemIcons.ts';
 import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
 
 /** Valida el contenido y prepara recursos compartidos. Si los datos son inválidos, lo muestra. */
@@ -20,6 +21,7 @@ export class BootScene extends Phaser.Scene {
       createPlaceholderTextures(this, content.catalog);
       createPlayerAnimations(this);
       createCreatureTextures(this, [...content.creatures.all.values()].map((c) => c.spriteAtlas));
+      createItemIcons(this, content.items);
       this.scene.start(SceneKeys.Menu);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);

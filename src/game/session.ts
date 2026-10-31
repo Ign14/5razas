@@ -21,6 +21,8 @@ export class GameSession {
   readonly character: CharacterConfig;
   readonly exploration: ExplorationState;
   readonly sim: WorldSimulation;
+  /** Con el inventario abierto la simulación no avanza. */
+  paused = false;
   private readonly revealListeners = new Set<RevealListener>();
   private readonly eventListeners = new Set<EventListener>();
 
@@ -40,6 +42,13 @@ export class GameSession {
     const events = this.sim.update(dtSeconds, cmd);
     const revealed = this.exploration.reveal(this.sim.player.position, this.character.visionRadius);
     if (revealed.length > 0) this.revealListeners.forEach((l) => { l(revealed); });
+    for (const e of events) this.eventListeners.forEach((l) => { l(e); });
+    return events;
+  }
+
+  /** Reenvía los eventos generados con el juego en pausa (acciones de inventario). */
+  flush(): SimEvent[] {
+    const events = this.sim.drainEvents();
     for (const e of events) this.eventListeners.forEach((l) => { l(e); });
     return events;
   }

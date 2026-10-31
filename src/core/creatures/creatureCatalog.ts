@@ -1,5 +1,6 @@
 import { parseStats, type Stats } from '../combat/stats.ts';
 import { ID_PATTERN, Issues } from '../data/validate.ts';
+import { parseStatGrowth, type StatGrowth } from '../progression/progression.ts';
 
 /** Categorías de GAME_DESIGN §9. */
 export const CREATURE_CATEGORIES = ['fauna', 'common', 'special', 'boss', 'legendary'] as const;
@@ -27,6 +28,8 @@ export interface CreatureDefinition {
   readonly biome: string;
   readonly levelRange: readonly [number, number];
   readonly stats: Stats;
+  /** Incremento por nivel dentro de levelRange. */
+  readonly statsPerLevel: StatGrowth;
   readonly behavior: CreatureBehavior;
   readonly abilities: readonly string[];
   /** Referencia a una tabla de botín (se resuelve en la Fase 3). */
@@ -71,6 +74,7 @@ export function parseCreatureCatalog(raw: unknown, source: string): CreatureCata
       biome: issues.string(c['biome'], `${p}.biome`, { pattern: ID_PATTERN }),
       levelRange: [lmin, lmax] as [number, number],
       stats: parseStats(issues, c['stats'], `${p}.stats`),
+      statsPerLevel: parseStatGrowth(issues, c['statsPerLevel'], `${p}.statsPerLevel`),
       behavior: {
         type: issues.oneOf(b['type'], BEHAVIOR_TYPES, `${p}.behavior.type`),
         aggroRadius: issues.number(b['aggroRadius'], `${p}.behavior.aggroRadius`, { min: 0, max: 64 }),

@@ -1,6 +1,6 @@
 # Arquitectura — 5RAZAS
 
-Estado: Fases 0 y 2 completas; Fase 1 con pendientes menores. Última actualización: 2026-10-31.
+Estado: Fases 0, 2 y 3 completas; Fase 1 con pendientes menores. Última actualización: 2026-10-31.
 
 ## Stack verificado
 
@@ -27,17 +27,22 @@ src/
     creatures/ Bestiario por datos (GAME_DESIGN §9).
     professions/ Profesiones por datos (atributos base + 6 ranuras de acción).
     ai/        CreatureBrain (máquina de estados) y Navigator (línea recta o A*).
+    progression/ Curva de XP, niveles, etapas, crecimiento de atributos.
+    items/     Catálogo de objetos, inventario, equipamiento, conjuntos, tablas de botín, objetos en el suelo.
+    character/ PlayerCharacter: progresión + inventario + equipo + consumibles → atributos finales.
     simulation/ WorldSimulation: jugador, criaturas, IA, combate, apariciones y búfer de entrada.
     data/      Validación de JSON y contratos de configuración.
   data/        Contenido JSON: tiles, mapas Tiled, personaje, controles, combat/ (habilidades y
-               estados), professions/, creatures/.
+               estados), professions/, creatures/, items/ (objetos, conjuntos, botín), progression.json.
   game/        Adaptadores Phaser.
     scenes/    Boot → Menu → Game (+ Hud en paralelo).
     rendering/ Texturas provisionales, profundidades, WorldRenderer (+ transparencia por oclusión),
                CombatEffects (áreas, telegrafías, números de daño con pooling).
     entities/  PlayerView, CreatureView, efectos visuales de combate y barras de vida.
     input/     Teclado + ratón → PlayerCommand (asignaciones desde data/controls.json).
-    ui/        Minimapa, marco del jugador y barra de acciones.
+    ui/        Minimapa, marco del jugador (nivel, etapa, XP), barra de acciones (bloqueos por nivel),
+               ranuras rápidas Q/F, notificaciones laterales, textos de interfaz.
+    scenes/InventoryScene  Inventario y equipamiento (pausa la simulación).
     session.ts Partida en curso: WorldSimulation + exploración + suscripción a eventos (sin Phaser).
     content.ts Carga y validación del contenido.
   config/      Configuración del motor Phaser.
@@ -81,6 +86,33 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
   Sin ruta de regreso posible, se queda en su sitio. Solo se actualizan criaturas a ≤ 22 celdas (§14).
 - **Validación cruzada**: `validateContentReferences` comprueba profesión ↔ habilidades ↔ estados ↔ criaturas ↔ zonas.
 
+## Progresión, objetos y equipamiento (Fase 3)
+
+- **Curva de XP** (`progression.json`): XP de L a L+1 = `round(base + factor × (L−1)^exponent)`, nivel máximo 100.
+  Etapas por datos: Novato (1), Profesión I (22), Profesión Senior (40), Ascensión: Dios (100).
+- **Atributos finales** = `applyModifiers(base + statsPerLevel × (nivel − 1), modificadores del equipo y conjuntos)`.
+  `WorldSimulation.syncPlayerStats` los copia al combatiente al subir de nivel o cambiar el equipo
+  (la vida/energía actuales se recortan al nuevo máximo; al subir de nivel hay curación completa si
+  `fullHealOnLevelUp`).
+- **Desbloqueo de habilidades** por `unlockLevel` (Embestida 2, Corte Circular 3, Protección 4, Tempestad 5).
+- **XP de criaturas** = `xpReward × (1 + creatureXpPerLevel × (nivel − 1))`; el nivel de cada criatura se sortea
+  en `levelRange` al aparecer y escala sus atributos con `statsPerLevel`.
+- **Objetos** (`items.json`): categorías de §11, rareza, apilamiento (`maxStack`), icono provisional, `equip`
+  (ranura, nivel requerido, modificadores, conjunto) y `use` (efectos de consumible y recuperación compartida).
+  La validación impide equipo apilable, ranuras incompatibles con la categoría y consumibles sin efecto.
+- **Inventario**: 30 ranuras (`inventoryCapacity`), apilamiento, operaciones atómicas, serializable (`toJSON`).
+- **Equipamiento**: 6 ranuras (arma, cabeza, torso, piernas, pies, accesorio). Equipar devuelve la pieza anterior
+  al inventario; desequipar exige espacio. Conjuntos con bonificaciones por número de piezas (2/3/5).
+  MVP: Corteza (set I, nivel 1) y Raíz profunda (set II, nivel 12).
+- **Botín**: tablas por datos con probabilidades independientes (`rollLoot`, determinista). Los objetos caen al
+  suelo (`DropField`), se recogen automáticamente a ≤ 0,9 celdas y caducan a los 90 s. Si el inventario está
+  lleno, el objeto permanece en el suelo y se avisa (como máximo cada 3 s).
+- **Consumibles rápidos**: Q y F (`startingQuickSlots`, reasignables desde el inventario). Un consumible que no
+  tendría efecto (vida llena) no se gasta.
+- **Inventario en pantalla** (tecla I / Esc): equipo, atributos, conjuntos activos, filtros por categoría, detalle
+  del objeto y acciones (Equipar, Quitar, Usar, Asignar a Q/F). Con el inventario abierto la simulación se pausa;
+  las acciones pasan por `WorldSimulation` y sus eventos se entregan al HUD con `GameSession.flush()`.
+
 ## Sistema de coordenadas
 
 - Celdas lógicas: la celda (i, j) ocupa [i, i+1) × [j, j+1). Las entidades usan posiciones continuas.
@@ -112,8 +144,8 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
 
 ## Gancho de depuración
 
-`window.__5RAZAS__` (solo lectura): `player()`, `exploredCells()`, `creatures()`, `cooldowns()`, `xp()` y
-`mapId`. Lo usan las pruebas E2E.
+`window.__5RAZAS__` (solo lectura): `player()`, `exploredCells()`, `creatures()`, `cooldowns()`, `xp()`,
+`level()`, `inventory()`, `equipment()`, `drops()`, `paused()` y `mapId`. Lo usan las pruebas E2E.
 
 ## Limitaciones conocidas
 
@@ -123,4 +155,6 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
 - No hay transición entre sectores ni carga de chunks (Fase 1+/Expansión).
 - Las criaturas no colisionan entre sí ni con el jugador (pueden superponerse).
 - Las criaturas pueden atacar a través de un árbol si están dentro del alcance cuerpo a cuerpo.
-- `xp` es un contador; niveles, botín y desbloqueos por nivel llegan en la Fase 3 (hoy `unlockLevel` = 1).
+- La XP solo proviene de criaturas; misiones y descubrimientos (§7) llegarán con las Fases 4 y 6.
+- El progreso del personaje no se guarda todavía (IndexedDB en la Fase 6); `toJSON` ya está preparado.
+- El set II (nivel 12) solo se obtiene por botín de baja probabilidad; el jefe y la fabricación lo darán más adelante.

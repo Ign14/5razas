@@ -1,0 +1,39 @@
+{
+  "$comment": "Tablas de botín. Cada entrada se tira de forma independiente con su probabilidad (chance). Balance provisional.",
+  "lootTables": [
+    {
+      "id": "thorn-sprout-common",
+      "entries": [
+        { "itemId": "espina-dura", "chance": 0.7, "min": 1, "max": 2 },
+        { "itemId": "tonico-vital", "chance": 0.15, "min": 1, "max": 1 },
+        { "itemId": "yelmo-de-corteza", "chance": 0.04, "min": 1, "max": 1 },
+        { "itemId": "peto-de-corteza", "chance": 0.04, "min": 1, "max": 1 },
+        { "itemId": "grebas-de-corteza", "chance": 0.04, "min": 1, "max": 1 },
+        { "itemId": "botas-de-corteza", "chance": 0.04, "min": 1, "max": 1 },
+        { "itemId": "hoja-de-raiz", "chance": 0.008, "min": 1, "max": 1 },
+        { "itemId": "yelmo-de-raiz", "chance": 0.008, "min": 1, "max": 1 },
+        { "itemId": "peto-de-raiz", "chance": 0.008, "min": 1, "max": 1 },
+        { "itemId": "grebas-de-raiz", "chance": 0.008, "min": 1, "max": 1 },
+        { "itemId": "botas-de-raiz", "chance": 0.008, "min": 1, "max": 1 }
+      ]
+    },
+    {
+      "id": "ash-moth-common",
+      "entries": [
+        { "itemId": "polvo-ceniza", "chance": 0.7, "min": 1, "max": 2 },
+        { "itemId": "tonico-energia", "chance": 0.15, "min": 1, "max": 1 },
+        { "itemId": "tonico-vital", "chance": 0.05, "min": 1, "max": 1 },
+        { "itemId": "amuleto-de-musgo", "chance": 0.02, "min": 1, "max": 1 },
+        { "itemId": "yelmo-de-corteza", "chance": 0.03, "min": 1, "max": 1 },
+        { "itemId": "peto-de-corteza", "chance": 0.03, "min": 1, "max": 1 },
+        { "itemId": "grebas-de-corteza", "chance": 0.03, "min": 1, "max": 1 },
+        { "itemId": "botas-de-corteza", "chance": 0.03, "min": 1, "max": 1 },
+        { "itemId": "hoja-de-raiz", "chance": 0.006, "min": 1, "max": 1 },
+        { "itemId": "yelmo-de-raiz", "chance": 0.006, "min": 1, "max": 1 },
+        { "itemId": "peto-de-raiz", "chance": 0.006, "min": 1, "max": 1 },
+        { "itemId": "grebas-de-raiz", "chance": 0.006, "min": 1, "max": 1 },
+        { "itemId": "botas-de-raiz", "chance": 0.006, "min": 1, "max": 1 }
+      ]
+    }
+  ]
+}

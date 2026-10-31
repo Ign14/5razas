@@ -62,13 +62,15 @@ export class ActionBar {
       const remaining = player.cooldownRemaining(s.ability.id, now);
       const total = s.ability.category === 'basic' ? s.ability.cooldown / player.stats.attackRate : s.ability.cooldown;
       const noEnergy = player.energy < s.ability.energyCost;
+      const locked = player.level < s.ability.unlockLevel;
       const flashing = (this.flashUntil.get(s.slot) ?? 0) > now;
 
       g.fillStyle(s.slot === 'final' ? 0x3a2a12 : 0x161a22, 0.9).fillRoundedRect(sx, this.y, SLOT, SLOT, 5);
       if (remaining > 0 && total > 0) {
         g.fillStyle(0x000000, 0.6).fillRect(sx, this.y + SLOT * (1 - remaining / total), SLOT, SLOT * (remaining / total));
       }
-      if (noEnergy) g.fillStyle(0x1a3a6a, 0.45).fillRoundedRect(sx, this.y, SLOT, SLOT, 5);
+      if (noEnergy && !locked) g.fillStyle(0x1a3a6a, 0.45).fillRoundedRect(sx, this.y, SLOT, SLOT, 5);
+      if (locked) g.fillStyle(0x000000, 0.7).fillRoundedRect(sx, this.y, SLOT, SLOT, 5);
       g.lineStyle(2, flashing ? 0xff4a3a : s.slot === 'final' ? 0xe8c872 : 0x8a8f9c, 1).strokeRoundedRect(
         sx,
         this.y,
@@ -76,8 +78,9 @@ export class ActionBar {
         SLOT,
         5,
       );
-      this.timers[i]?.setText(remaining > 0.05 && total >= 1 ? remaining.toFixed(remaining < 3 ? 1 : 0) : '');
-      this.labels[i]?.setAlpha(remaining > 0 || noEnergy ? 0.5 : 1);
+      const timer = remaining > 0.05 && total >= 1 ? remaining.toFixed(remaining < 3 ? 1 : 0) : '';
+      this.timers[i]?.setText(locked ? `Nv ${s.ability.unlockLevel}` : timer).setColor(locked ? '#f2d16b' : '#ffffff');
+      this.labels[i]?.setAlpha(locked ? 0.25 : remaining > 0 || noEnergy ? 0.5 : 1);
     });
   }
 }

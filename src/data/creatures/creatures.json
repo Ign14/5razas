@@ -1,5 +1,5 @@
 {
-  "$comment": "Bestiario (GAME_DESIGN §9). Enemigos comunes ficticios, sin vínculo cultural. lootTable se resolverá en la Fase 3. poise: retroceso mínimo que interrumpe su ataque.",
+  "$comment": "Bestiario (GAME_DESIGN §9). Enemigos comunes ficticios, sin vínculo cultural. El nivel se elige al aparecer dentro de levelRange; statsPerLevel escala sus atributos. poise: retroceso mínimo que interrumpe su ataque.",
   "creatures": [
     {
       "id": "thorn-sprout",
@@ -8,6 +8,7 @@
       "biome": "temperate-forest",
       "levelRange": [1, 3],
       "stats": { "life": 55, "energy": 0, "attack": 10, "power": 0, "defense": 8, "resistance": 4, "speed": 2.2, "attackRate": 1, "crit": 0.05, "evasion": 0 },
+      "statsPerLevel": { "life": 12, "attack": 2, "defense": 1.5 },
       "behavior": { "type": "aggressive", "aggroRadius": 6, "leashRadius": 13, "attackRange": 1.3, "wanderRadius": 2.5 },
       "abilities": ["thorn-lash"],
       "lootTable": "thorn-sprout-common",
@@ -25,6 +26,7 @@
       "biome": "temperate-forest",
       "levelRange": [1, 2],
       "stats": { "life": 32, "energy": 0, "attack": 8, "power": 0, "defense": 2, "resistance": 2, "speed": 3.6, "attackRate": 1, "crit": 0.05, "evasion": 0.12 },
+      "statsPerLevel": { "life": 7, "attack": 1.5, "defense": 0.5 },
       "behavior": { "type": "aggressive", "aggroRadius": 8, "leashRadius": 15, "attackRange": 2.2, "wanderRadius": 3.5 },
       "abilities": ["ash-dive"],
       "lootTable": "ash-moth-common",

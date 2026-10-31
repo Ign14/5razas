@@ -4,5 +4,12 @@
   "name": "Viajero",
   "professionId": "guardian-del-bosque",
   "colliderHalfSize": 0.3,
-  "visionRadius": 7
+  "visionRadius": 7,
+  "inventoryCapacity": 30,
+  "startingItems": [
+    { "itemId": "tonico-vital", "quantity": 3 },
+    { "itemId": "tonico-energia", "quantity": 2 }
+  ],
+  "startingEquipment": ["hoja-de-corteza"],
+  "startingQuickSlots": ["tonico-vital", "tonico-energia"]
 }
