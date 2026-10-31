@@ -11,5 +11,6 @@
   "dodge": ["SPACE"],
   "quick1": ["Q"],
   "quick2": ["F"],
-  "inventory": ["I"]
+  "inventory": ["I"],
+  "interact": ["E"]
 }

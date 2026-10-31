@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CreatureBrain } from '../../src/core/ai/creatureBrain.ts';
+import { threatRadius } from '../../src/core/creatures/creatureCatalog.ts';
 import { createRng } from '../../src/core/math/random.ts';
 import { creatureXp } from '../../src/core/progression/progression.ts';
 import {
@@ -13,7 +14,7 @@ import {
 import { loadTestContent, makeCombatant } from './helpers.ts';
 
 const content = loadTestContent();
-const IDLE: PlayerCommand = { move: { x: 0, y: 0 }, aim: null, action: null, pressed: false, quickSlot: null };
+const IDLE: PlayerCommand = { move: { x: 0, y: 0 }, aim: null, action: null, pressed: false, quickSlot: null, interact: false };
 const DT = 1 / 60;
 
 function runSim(sim: WorldSimulation, seconds: number, cmd: (t: number) => PlayerCommand = () => IDLE): SimEvent[] {
@@ -93,7 +94,7 @@ describe('WorldSimulation con el contenido real', () => {
   it('ninguna zona puede detectar al jugador en su punto de aparición', () => {
     for (const z of content.map.spawnZones) {
       const c = content.creatures.get(z.creatureId);
-      const reach = z.radius + c.behavior.wanderRadius + c.behavior.aggroRadius;
+      const reach = z.radius + c.behavior.wanderRadius + threatRadius(c.behavior);
       const d = Math.hypot(z.center.x - content.map.spawn.x, z.center.y - content.map.spawn.y);
       expect(d, z.id).toBeGreaterThan(reach + 1);
     }
@@ -206,10 +207,10 @@ describe('WorldSimulation con el contenido real', () => {
 
     const spawned = events.find((e) => e.type === 'drop-spawned');
     if (spawned?.type !== 'drop-spawned') throw new Error('no hubo botín');
-    // Caminar hasta el objeto: se mueve al jugador directamente sobre él.
+    // Caminar hasta el objeto (puede haberse recogido ya si cayó junto al jugador).
     sim.player.position = spawned.drop.position;
-    const later = runSim(sim, 0.05);
-    expect(later).toContainEqual(expect.objectContaining({ type: 'drop-collected', itemId: 'espina-dura', quantity: 2 }));
+    const all = [...events, ...runSim(sim, 0.05)];
+    expect(all).toContainEqual(expect.objectContaining({ type: 'drop-collected', itemId: 'espina-dura', quantity: 2 }));
     expect(sim.character.inventory.count('espina-dura')).toBe(2);
   });
 

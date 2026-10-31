@@ -12,7 +12,27 @@ export const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as c
 export type Rarity = (typeof RARITIES)[number];
 
 /** Forma del icono provisional generado por código. */
-export const ICON_SHAPES = ['potion', 'blade', 'helm', 'chest', 'legs', 'boots', 'amulet', 'shard', 'dust', 'leaf'] as const;
+export const ICON_SHAPES = [
+  'potion',
+  'blade',
+  'helm',
+  'chest',
+  'legs',
+  'boots',
+  'amulet',
+  'shard',
+  'dust',
+  'leaf',
+  'root',
+  'flower',
+  'mushroom',
+  'seed',
+  'sap',
+  'spore',
+  'meat',
+  'hide',
+  'feather',
+] as const;
 export type IconShape = (typeof ICON_SHAPES)[number];
 
 export const USE_EFFECTS = ['heal', 'restoreEnergy'] as const;

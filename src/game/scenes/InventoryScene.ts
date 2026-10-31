@@ -20,7 +20,8 @@ type Selection = { kind: 'inventory'; index: number } | { kind: 'equipment'; slo
 const FILTERS: readonly { label: string; categories: readonly ItemCategory[] | null }[] = [
   { label: 'Todo', categories: null },
   { label: 'Consumibles', categories: ['consumable'] },
-  { label: 'Materiales', categories: ['material', 'ingredient'] },
+  { label: 'Ingredientes', categories: ['ingredient'] },
+  { label: 'Materiales', categories: ['material'] },
   { label: 'Equipo', categories: ['weapon', 'armor', 'accessory'] },
   { label: 'Misión', categories: ['quest'] },
 ];
@@ -155,15 +156,15 @@ export class InventoryScene extends Phaser.Scene {
 
     // --- Filtros e inventario ---
     FILTERS.forEach((f, i) => {
-      const fx = ox + 290 + i * 102;
+      const fx = ox + 290 + i * 87;
       const on = i === this.filter;
-      const r = this.add.rectangle(fx, oy + 40, 98, 20, on ? 0x3a4458 : 0x161a22).setOrigin(0).setStrokeStyle(1, on ? 0xf2d16b : 0x3a3f4a);
+      const r = this.add.rectangle(fx, oy + 40, 84, 20, on ? 0x3a4458 : 0x161a22).setOrigin(0).setStrokeStyle(1, on ? 0xf2d16b : 0x3a3f4a);
       r.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
         this.filter = i;
         this.render();
       });
       this.layer.add(r);
-      this.text(fx + 49, oy + 43, f.label, 11).setOrigin(0.5, 0);
+      this.text(fx + 42, oy + 43, f.label, 10).setOrigin(0.5, 0);
     });
     const cats = FILTERS[this.filter]?.categories ?? null;
     const visible = character.inventory.contents

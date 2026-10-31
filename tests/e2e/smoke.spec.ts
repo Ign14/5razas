@@ -122,3 +122,23 @@ test('inventario: se abre con I, pausa el juego, muestra el equipo inicial y se 
   await expect.poll(async () => (await d())?.paused).toBe(false);
   expect(errors).toEqual([]);
 });
+
+test('ecosistema: plantas y fauna en el mundo, reloj en marcha y recolección con E', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__5RAZAS__ !== undefined);
+  const info = await page.evaluate(() => {
+    const d = window.__5RAZAS__;
+    return d ? { plants: d.plants().length, hour: d.hour() } : null;
+  });
+  expect(info?.plants).toBeGreaterThanOrEqual(25);
+  expect(info?.hour).toBeGreaterThanOrEqual(8);
+  // El reloj avanza con el tiempo de juego.
+  await expect.poll(async () => page.evaluate(() => window.__5RAZAS__?.hour() ?? 0)).toBeGreaterThan(info?.hour ?? 0);
+  // Pulsar E sin nada cerca no produce errores.
+  await page.keyboard.press('e');
+  await page.waitForTimeout(200);
+  expect(errors).toEqual([]);
+});

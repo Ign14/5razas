@@ -15,6 +15,15 @@ export interface SpawnZone {
   readonly count: number;
 }
 
+/** Zona de recolección de una planta (objeto Tiled de tipo "gather-zone", GAME_DESIGN §3.3). */
+export interface GatherZone {
+  readonly id: string;
+  readonly plantId: string;
+  readonly center: Vec2;
+  readonly radius: number;
+  readonly count: number;
+}
+
 /** Sector del mundo ya validado, independiente del formato de origen y de Phaser. */
 export class WorldMap implements CollisionMap {
   readonly id: string;
@@ -25,6 +34,7 @@ export class WorldMap implements CollisionMap {
   readonly layers: Readonly<Record<MapLayerId, LayerCells>>;
   readonly spawn: Vec2;
   readonly spawnZones: readonly SpawnZone[];
+  readonly gatherZones: readonly GatherZone[];
   readonly catalog: TileCatalog;
   private readonly blocked: Uint8Array;
 
@@ -37,6 +47,7 @@ export class WorldMap implements CollisionMap {
     layers: Readonly<Record<MapLayerId, LayerCells>>;
     spawn: Vec2;
     spawnZones?: readonly SpawnZone[];
+    gatherZones?: readonly GatherZone[];
     catalog: TileCatalog;
   }) {
     const { width, height, layers, catalog } = init;
@@ -48,6 +59,7 @@ export class WorldMap implements CollisionMap {
     this.layers = layers;
     this.spawn = init.spawn;
     this.spawnZones = init.spawnZones ?? [];
+    this.gatherZones = init.gatherZones ?? [];
     this.catalog = catalog;
     this.blocked = new Uint8Array(width * height);
     for (const layer of Object.values(layers)) {

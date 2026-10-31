@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { UseFailure } from '../../core/combat/combatWorld.ts';
 import type { SimEvent } from '../../core/simulation/worldSimulation.ts';
+import { dayAt, formatHour } from '../../core/world/worldClock.ts';
 import type { GameContent } from '../content.ts';
 import { RARITY_COLORS } from '../rendering/itemIcons.ts';
 import type { GameSession } from '../session.ts';
@@ -35,6 +36,7 @@ export class HudScene extends Phaser.Scene {
   private sectorLabel!: Phaser.GameObjects.Text;
   private hint!: Phaser.GameObjects.Text;
   private notice!: Phaser.GameObjects.Text;
+  private prompt!: Phaser.GameObjects.Text;
   private banner!: Phaser.GameObjects.Text;
   private deathOverlay!: Phaser.GameObjects.Rectangle;
   private noticeUntil = 0;
@@ -63,14 +65,18 @@ export class HudScene extends Phaser.Scene {
     );
     this.quickSlots = new QuickSlotsView(this, ['Q', 'F']);
     this.feed = new NotificationFeed(this);
-    this.sectorLabel = this.add.text(0, 0, '', { ...TEXT, fontSize: '13px' }).setOrigin(1, 0);
+    this.sectorLabel = this.add.text(0, 0, '', { ...TEXT, fontSize: '13px', align: 'right' }).setOrigin(1, 0);
     this.hint = this.add
-      .text(0, 0, 'WASD moverse · Clic atacar · 1 2 3 poderes · R final · Espacio evadir · Q F consumibles', {
+      .text(0, 0, 'WASD moverse · Clic atacar · 1 2 3 poderes · R final · Espacio evadir · Q F consumibles · E recolectar', {
         ...TEXT,
         fontSize: '11px',
         color: '#a9a596',
       })
       .setOrigin(0.5, 1);
+    this.prompt = this.add
+      .text(0, 0, '', { ...TEXT, fontSize: '14px', color: '#f2efe0', backgroundColor: '#0b0d12cc', padding: { x: 8, y: 4 } })
+      .setOrigin(0.5, 1)
+      .setVisible(false);
     this.deathOverlay = this.add.rectangle(0, 0, 10, 10, 0x2a0000, 0.45).setOrigin(0).setVisible(false);
     this.notice = this.add.text(0, 0, '', { ...TEXT, fontSize: '20px', color: '#ffd0c0' }).setOrigin(0.5);
     this.banner = this.add
@@ -130,6 +136,15 @@ export class HudScene extends Phaser.Scene {
       case 'item-used':
         this.feed.push(`Usaste ${this.itemName(e.itemId)}`, '#c9c3b0', now);
         break;
+      case 'harvested': {
+        this.feed.push(`+${e.quantity} ${this.itemName(e.itemId)}`, '#9fe870', now);
+        break;
+      }
+      case 'interact-failed': {
+        if (e.reason === 'regrowing') this.showNotice('Todavía no ha vuelto a crecer', 1.2);
+        else if (e.reason === 'out-of-hours') this.showNotice('No se puede recolectar a esta hora', 1.2);
+        break;
+      }
       case 'item-failed': {
         const text = e.itemId === null && e.reason === 'missing' ? 'Ranura rápida vacía' : ITEM_FAILURE_TEXT[e.reason];
         if (text && !this.session.paused) this.showNotice(text, 1.2);
@@ -148,11 +163,12 @@ export class HudScene extends Phaser.Scene {
   private layout(width: number, height: number): void {
     this.minimap.layout(width - MARGIN, MARGIN);
     this.sectorLabel.setPosition(width - MARGIN, MARGIN + this.minimap.height + 18);
-    this.feed.layout(width - MARGIN, MARGIN + this.minimap.height + 40);
+    this.feed.layout(width - MARGIN, MARGIN + this.minimap.height + 58);
     this.actionBar.layout(width / 2, height - MARGIN - 16);
     this.quickSlots.layout(width - MARGIN, height - MARGIN);
     this.hint.setPosition(width / 2, height - 6);
     this.notice.setPosition(width / 2, height * 0.3);
+    this.prompt.setPosition(width / 2, height - MARGIN - 90);
     this.banner.setPosition(width / 2, height * 0.2);
     this.deathOverlay.setSize(width, height);
   }
@@ -169,6 +185,31 @@ export class HudScene extends Phaser.Scene {
     this.banner.setVisible(now < this.bannerUntil);
     if (now < this.bannerUntil) this.banner.setAlpha(Math.min(1, this.bannerUntil - now));
     const { position } = this.session.player;
-    this.sectorLabel.setText(`${this.session.map.name}  (${Math.floor(position.x)}, ${Math.floor(position.y)})`);
+    const day = dayAt(this.content.clock, now);
+    this.sectorLabel.setText(
+      `${this.session.map.name}  (${Math.floor(position.x)}, ${Math.floor(position.y)})
+Día ${day} · ${formatHour(sim.hour)}`,
+    );
+    this.updatePrompt();
+  }
+
+  /** Aviso de interacción con la planta al alcance (GAME_DESIGN §12, tecla E). */
+  private updatePrompt(): void {
+    const target = this.session.paused ? null : this.session.sim.interactionTarget();
+    if (!target) {
+      this.prompt.setVisible(false);
+      return;
+    }
+    const plant = this.content.plants.get(target.node.plantId);
+    const hours = plant.conditions.activeHours;
+    let text = `E: Recolectar ${plant.name}`;
+    if (!target.ready) {
+      const left = Math.ceil(target.node.readyAt - this.session.sim.time);
+      text =
+        left > 0
+          ? `${plant.name}: vuelve a crecer en ${left} s`
+          : `${plant.name}: solo de ${formatHour(hours?.[0] ?? 0)} a ${formatHour(hours?.[1] ?? 0)}`;
+    }
+    this.prompt.setText(text).setColor(target.ready ? '#f2efe0' : '#a9a596').setVisible(true);
   }
 }

@@ -3,6 +3,7 @@ import { loadContent } from '../content.ts';
 import {
   createCreatureTextures,
   createPlaceholderTextures,
+  createPlantTextures,
   createPlayerAnimations,
 } from '../rendering/placeholderTextures.ts';
 import { createItemIcons } from '../rendering/itemIcons.ts';
@@ -22,6 +23,10 @@ export class BootScene extends Phaser.Scene {
       createPlayerAnimations(this);
       createCreatureTextures(this, [...content.creatures.all.values()].map((c) => c.spriteAtlas));
       createItemIcons(this, content.items);
+      createPlantTextures(
+        this,
+        [...content.plants.all.values()].map((p) => ({ id: p.id, ...content.items.get(p.itemId).icon })),
+      );
       this.scene.start(SceneKeys.Menu);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);

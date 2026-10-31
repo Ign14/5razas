@@ -230,6 +230,65 @@ const CREATURE_PAINTERS: Readonly<Record<string, CreaturePainter>> = {
     ctx.fillRect(ox + 18, 15, 1, 1);
     ctx.fillRect(ox + 21, 15, 1, 1);
   },
+  // --- Fauna real (siluetas provisionales) ---
+  'ph-creature-conejo': (ctx, ox, frame) => {
+    const hop = frame === 1 ? 2 : 0;
+    shadow(ctx, ox, 6);
+    blob(ctx, ox + 20, 30 - hop, 5, '#8c7258', 21);
+    blob(ctx, ox + 25, 26 - hop, 3, '#8c7258', 22);
+    ctx.fillStyle = '#7a634c';
+    ctx.fillRect(ox + 25, 18 - hop, 2, 6);
+    ctx.fillRect(ox + 28, 18 - hop, 2, 6);
+    ctx.fillStyle = '#f2efe8';
+    ctx.fillRect(ox + 14, 28 - hop, 3, 3);
+    ctx.fillStyle = '#1a1414';
+    ctx.fillRect(ox + 27, 25 - hop, 1, 1);
+  },
+  'ph-creature-ciervo': (ctx, ox, frame) => {
+    const step = frame === 1 ? 1 : 0;
+    shadow(ctx, ox, 10);
+    ctx.fillStyle = '#6e4f33';
+    for (const [x, y] of [[12, 27], [16, 27], [24, 27], [27, 27]] as const) ctx.fillRect(ox + x + (x < 20 ? step : -step), y, 2, 9);
+    blob(ctx, ox + 19, 23, 7, '#a0754c', 31);
+    blob(ctx, ox + 28, 15, 4, '#a0754c', 32);
+    ctx.fillStyle = '#5a3e26';
+    ctx.fillRect(ox + 27, 5, 1, 7);
+    ctx.fillRect(ox + 31, 5, 1, 7);
+    ctx.fillRect(ox + 25, 7, 3, 1);
+    ctx.fillRect(ox + 31, 7, 3, 1);
+    ctx.fillStyle = '#f2efe8';
+    ctx.fillRect(ox + 11, 20, 3, 3);
+    ctx.fillStyle = '#1a1414';
+    ctx.fillRect(ox + 30, 14, 1, 1);
+  },
+  'ph-creature-pavo': (ctx, ox, frame) => {
+    const bob = frame === 1 ? 1 : 0;
+    shadow(ctx, ox, 8);
+    ctx.fillStyle = '#7a5a2a';
+    for (let i = 0; i < 5; i++) ctx.fillRect(ox + 8 + i * 3, 13 + Math.abs(i - 2) * 2, 3, 12);
+    blob(ctx, ox + 20, 26, 6, '#3d3226', 41);
+    ctx.fillStyle = '#5b6b8a';
+    ctx.fillRect(ox + 25, 15 + bob, 3, 8);
+    ctx.fillStyle = '#c0392b';
+    ctx.fillRect(ox + 27, 18 + bob, 2, 3);
+    ctx.fillStyle = '#d9a040';
+    ctx.fillRect(ox + 18, 32, 1, 4);
+    ctx.fillRect(ox + 22, 32, 1, 4);
+  },
+  'ph-creature-pecari': (ctx, ox, frame) => {
+    const step = frame === 1 ? 1 : 0;
+    shadow(ctx, ox, 10);
+    ctx.fillStyle = '#2e2a26';
+    for (const [x] of [[13], [17], [23], [26]] as const) ctx.fillRect(ox + x + (x < 20 ? step : -step), 29, 2, 7);
+    blob(ctx, ox + 19, 25, 8, '#4a443d', 51);
+    blob(ctx, ox + 28, 26, 4, '#4a443d', 52);
+    ctx.fillStyle = '#b8b0a0';
+    ctx.fillRect(ox + 14, 21, 10, 2);
+    ctx.fillStyle = '#e8e0d0';
+    ctx.fillRect(ox + 31, 28, 2, 1);
+    ctx.fillStyle = '#1a1414';
+    ctx.fillRect(ox + 29, 24, 1, 1);
+  },
 };
 
 function fallbackPainter(ctx: CanvasRenderingContext2D, ox: number, frame: number) {
@@ -257,5 +316,43 @@ export function createCreatureTextures(scene: Phaser.Scene, atlasKeys: Iterable<
         repeat: -1,
       });
     }
+  }
+}
+
+/** Texturas PROVISIONALES de plantas en el mundo (24 × 28 px), a partir del color de su ingrediente. */
+export const PLANT_TEXTURE_W = 24;
+export const PLANT_TEXTURE_H = 28;
+export const plantTextureKey = (plantId: string) => `ph-plant-${plantId}`;
+
+export function createPlantTextures(scene: Phaser.Scene, plants: Iterable<{ id: string; color: string; shape: string }>): void {
+  for (const p of plants) {
+    const key = plantTextureKey(p.id);
+    if (scene.textures.exists(key)) continue;
+    const canvas = scene.textures.createCanvas(key, PLANT_TEXTURE_W, PLANT_TEXTURE_H);
+    if (!canvas) throw new Error(`No se pudo crear la textura ${key}`);
+    const ctx = canvas.context;
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.ellipse(12, 25, 8, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tallos y hojas comunes.
+    ctx.fillStyle = '#3f6b2a';
+    for (const [x, h] of [[8, 10], [12, 14], [16, 9]] as const) ctx.fillRect(x, 25 - h, 1, h);
+    ctx.fillStyle = '#4f8a3c';
+    for (const [x, y] of [[6, 18], [13, 15], [16, 19]] as const) ctx.fillRect(x, y, 3, 2);
+    // Parte distintiva con el color de la planta.
+    ctx.fillStyle = p.color;
+    if (p.shape === 'mushroom') {
+      ctx.fillRect(5, 13, 14, 4);
+      ctx.fillRect(7, 11, 10, 2);
+      ctx.fillStyle = '#e6dcc0';
+      ctx.fillRect(10, 17, 4, 8);
+    } else if (p.shape === 'root') {
+      ctx.fillRect(9, 20, 6, 5);
+      ctx.fillRect(10, 8, 4, 3);
+    } else {
+      for (const [x, y] of [[7, 13], [11, 9], [15, 14], [10, 15]] as const) ctx.fillRect(x, y, 4, 3);
+    }
+    canvas.refresh();
   }
 }

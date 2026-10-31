@@ -11,6 +11,8 @@ interface FiveRazasDebug {
   equipment(): Record<string, string>;
   paused(): boolean;
   drops(): { itemId: string; x: number; y: number }[];
+  hour(): number;
+  plants(): { id: string; plantId: string; x: number; y: number; ready: boolean }[];
   readonly mapId: string;
 }
 

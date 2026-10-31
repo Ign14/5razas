@@ -3,6 +3,7 @@ import { parseStatusCatalog } from '../core/combat/statusEffects.ts';
 import { parseCharacterConfig } from '../core/data/characterConfig.ts';
 import { DataValidationError } from '../core/data/validate.ts';
 import { parseCreatureCatalog } from '../core/creatures/creatureCatalog.ts';
+import { parsePlantCatalog } from '../core/ecosystem/plants.ts';
 import { parseEquipmentSets } from '../core/items/equipmentSets.ts';
 import { parseItemCatalog } from '../core/items/itemCatalog.ts';
 import { parseLootTables } from '../core/items/lootTables.ts';
@@ -11,6 +12,7 @@ import { parseProgression } from '../core/progression/progression.ts';
 import { validateContentReferences, type SimulationContent } from '../core/simulation/worldSimulation.ts';
 import { parseTileCatalog, type TileCatalog } from '../core/world/tileCatalog.ts';
 import { parseTiledMap } from '../core/world/tiledLoader.ts';
+import { parseClockConfig } from '../core/world/worldClock.ts';
 import playerJson from '../data/characters/provisional-player.json';
 import abilitiesJson from '../data/combat/abilities.json';
 import statusesJson from '../data/combat/statuses.json';
@@ -20,9 +22,11 @@ import setsJson from '../data/items/equipmentSets.json';
 import itemsJson from '../data/items/items.json';
 import lootJson from '../data/items/lootTables.json';
 import mapJson from '../data/maps/bosque-inicial.json';
+import plantsJson from '../data/plants.json';
 import guardianJson from '../data/professions/guardian-del-bosque.json';
 import progressionJson from '../data/progression.json';
 import tilesJson from '../data/tiles.json';
+import worldJson from '../data/world.json';
 
 /** Contenido del juego ya validado. Se carga una sola vez en BootScene. */
 export interface GameContent extends SimulationContent {
@@ -44,6 +48,8 @@ export function loadContent(): GameContent {
     sets: parseEquipmentSets(setsJson, 'data/items/equipmentSets.json'),
     lootTables: parseLootTables(lootJson, 'data/items/lootTables.json'),
     progression: parseProgression(progressionJson, 'data/progression.json'),
+    plants: parsePlantCatalog(plantsJson, 'data/plants.json'),
+    clock: parseClockConfig(worldJson, 'data/world.json'),
     controlsRaw: controlsJson,
   };
   const problems = validateContentReferences(content);

@@ -1,6 +1,6 @@
 # Arquitectura — 5RAZAS
 
-Estado: Fases 0, 2 y 3 completas; Fase 1 con pendientes menores. Última actualización: 2026-10-31.
+Estado: Fases 0, 2, 3 y 4 completas; Fase 1 con pendientes menores. Última actualización: 2026-10-31.
 
 ## Stack verificado
 
@@ -30,10 +30,12 @@ src/
     progression/ Curva de XP, niveles, etapas, crecimiento de atributos.
     items/     Catálogo de objetos, inventario, equipamiento, conjuntos, tablas de botín, objetos en el suelo.
     character/ PlayerCharacter: progresión + inventario + equipo + consumibles → atributos finales.
+    ecosystem/ Catálogo de plantas y PlantField (ubicación por zonas, recolección, regeneración).
     simulation/ WorldSimulation: jugador, criaturas, IA, combate, apariciones y búfer de entrada.
     data/      Validación de JSON y contratos de configuración.
   data/        Contenido JSON: tiles, mapas Tiled, personaje, controles, combat/ (habilidades y
-               estados), professions/, creatures/, items/ (objetos, conjuntos, botín), progression.json.
+               estados), professions/, creatures/, items/ (objetos, conjuntos, botín), progression.json,
+               plants.json, world.json (ciclo de día y noche).
   game/        Adaptadores Phaser.
     scenes/    Boot → Menu → Game (+ Hud en paralelo).
     rendering/ Texturas provisionales, profundidades, WorldRenderer (+ transparencia por oclusión),
@@ -113,6 +115,27 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
   del objeto y acciones (Equipar, Quitar, Usar, Asignar a Q/F). Con el inventario abierto la simulación se pausa;
   las acciones pasan por `WorldSimulation` y sus eventos se entregan al HUD con `GameSession.flush()`.
 
+## Ecosistema (Fase 4)
+
+- **Reloj del mundo** (`world.json`, `worldClock.ts`): un día dura 600 s reales. `hourAt`, `dayAt`, rangos
+  horarios que cruzan la medianoche (`[19, 6]`) y `darknessAt` (solo visual: capa nocturna sobre el mundo).
+- **Fauna real del bioma** (sin atribuciones culturales), equipo `wild`: Conejo de cola de algodón y Ciervo de cola
+  blanca (huidizos), Pavo silvestre (neutral) y Pecarí de collar (territorial). Cada especie define hábitat (tiles),
+  comportamiento, velocidad, vida, botín, XP y horario de aparición (`spawnRules.activeHours`).
+- **Comportamientos** (`CreatureBehavior`, unión discriminada):
+  - `aggressive`: persigue al detectar (enemigos de la Fase 2).
+  - `territorial`: ataca si el jugador entra en su territorio; deja de perseguir al salir (× 1,6).
+  - `neutral`: ignora al jugador hasta recibir daño; responde durante `retaliateSeconds`.
+  - `fleeing`: estado de **alerta** (se detiene y vigila, marca "!") y **huida** al acercarse o recibir daño.
+  Cualquier criatura combativa dañada persigue a su atacante unos segundos aunque esté fuera de su rango.
+- **Horarios**: fuera de su horario una especie no aparece ni reaparece, y sus ejemplares lejanos (> 22 celdas)
+  desaparecen (evento `despawned`).
+- **Plantas** (`plants.json`): las 10 especies ficticias del §10.4, con propiedades alquímicas (elemento + potencia),
+  rareza, regeneración, condiciones (terreno y horario), compatibilidades y rendimiento. Se ubican por zonas
+  `gather-zone` del mapa Tiled solo en celdas cuyo suelo cumpla sus condiciones.
+- **Recolección** (tecla E, alcance 1,4 celdas): ingrediente al inventario (si no cabe, cae al suelo), XP y
+  regeneración. Aviso en pantalla con el estado de la planta (madura, regenerándose o fuera de horario).
+
 ## Sistema de coordenadas
 
 - Celdas lógicas: la celda (i, j) ocupa [i, i+1) × [j, j+1). Las entidades usan posiciones continuas.
@@ -145,7 +168,8 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
 ## Gancho de depuración
 
 `window.__5RAZAS__` (solo lectura): `player()`, `exploredCells()`, `creatures()`, `cooldowns()`, `xp()`,
-`level()`, `inventory()`, `equipment()`, `drops()`, `paused()` y `mapId`. Lo usan las pruebas E2E.
+`level()`, `inventory()`, `equipment()`, `drops()`, `paused()`, `hour()`, `plants()` y `mapId`.
+Lo usan las pruebas E2E.
 
 ## Limitaciones conocidas
 
@@ -155,6 +179,9 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
 - No hay transición entre sectores ni carga de chunks (Fase 1+/Expansión).
 - Las criaturas no colisionan entre sí ni con el jugador (pueden superponerse).
 - Las criaturas pueden atacar a través de un árbol si están dentro del alcance cuerpo a cuerpo.
-- La XP solo proviene de criaturas; misiones y descubrimientos (§7) llegarán con las Fases 4 y 6.
+- La XP proviene de criaturas, caza y recolección; misiones y descubrimiento de regiones llegarán en la Fase 6.
+- Los animales que huyen no evitan activamente a los enemigos ni entre sí; la fauna no interactúa con otras criaturas.
+- `WorldSimulation` concentra la orquestación de apariciones, horarios e interacción (~560 líneas): candidata a
+  extraer un módulo `CreaturePopulation` antes de la Fase 6.
 - El progreso del personaje no se guarda todavía (IndexedDB en la Fase 6); `toJSON` ya está preparado.
 - El set II (nivel 12) solo se obtiene por botín de baja probabilidad; el jefe y la fabricación lo darán más adelante.

@@ -1,41 +1,301 @@
 {
-  "$comment": "Bestiario (GAME_DESIGN §9). Enemigos comunes ficticios, sin vínculo cultural. El nivel se elige al aparecer dentro de levelRange; statsPerLevel escala sus atributos. poise: retroceso mínimo que interrumpe su ataque.",
+  "$comment": "Bestiario (GAME_DESIGN §8-9). Enemigos comunes ficticios y fauna REAL del bioma (sin atribuciones culturales; comportamientos simplificados para el juego). El nivel se elige al aparecer dentro de levelRange; statsPerLevel escala sus atributos. poise: retroceso mínimo que interrumpe su ataque. habitat: tiles donde aparece. activeHours: horario de aparición.",
   "creatures": [
     {
       "id": "thorn-sprout",
       "name": "Brote Espinoso",
       "category": "common",
       "biome": "temperate-forest",
-      "levelRange": [1, 3],
-      "stats": { "life": 55, "energy": 0, "attack": 10, "power": 0, "defense": 8, "resistance": 4, "speed": 2.2, "attackRate": 1, "crit": 0.05, "evasion": 0 },
-      "statsPerLevel": { "life": 12, "attack": 2, "defense": 1.5 },
-      "behavior": { "type": "aggressive", "aggroRadius": 6, "leashRadius": 13, "attackRange": 1.3, "wanderRadius": 2.5 },
-      "abilities": ["thorn-lash"],
+      "levelRange": [
+        1,
+        3
+      ],
+      "stats": {
+        "life": 55,
+        "energy": 0,
+        "attack": 10,
+        "power": 0,
+        "defense": 8,
+        "resistance": 4,
+        "speed": 2.2,
+        "attackRate": 1,
+        "crit": 0.05,
+        "evasion": 0
+      },
+      "statsPerLevel": {
+        "life": 12,
+        "attack": 2,
+        "defense": 1.5
+      },
+      "behavior": {
+        "type": "aggressive",
+        "aggroRadius": 6,
+        "leashRadius": 13,
+        "attackRange": 1.3,
+        "wanderRadius": 2.5
+      },
+      "abilities": [
+        "thorn-lash"
+      ],
       "lootTable": "thorn-sprout-common",
       "xpReward": 12,
       "spriteAtlas": "ph-creature-thorn-sprout",
       "hurtboxRadius": 0.42,
       "colliderHalfSize": 0.3,
       "poise": 0.6,
-      "spawnRules": { "respawnSeconds": 25 }
+      "spawnRules": {
+        "respawnSeconds": 25,
+        "activeHours": null
+      },
+      "habitat": []
     },
     {
       "id": "ash-moth",
       "name": "Polilla Ceniza",
       "category": "common",
       "biome": "temperate-forest",
-      "levelRange": [1, 2],
-      "stats": { "life": 32, "energy": 0, "attack": 8, "power": 0, "defense": 2, "resistance": 2, "speed": 3.6, "attackRate": 1, "crit": 0.05, "evasion": 0.12 },
-      "statsPerLevel": { "life": 7, "attack": 1.5, "defense": 0.5 },
-      "behavior": { "type": "aggressive", "aggroRadius": 8, "leashRadius": 15, "attackRange": 2.2, "wanderRadius": 3.5 },
-      "abilities": ["ash-dive"],
+      "levelRange": [
+        1,
+        2
+      ],
+      "stats": {
+        "life": 32,
+        "energy": 0,
+        "attack": 8,
+        "power": 0,
+        "defense": 2,
+        "resistance": 2,
+        "speed": 3.6,
+        "attackRate": 1,
+        "crit": 0.05,
+        "evasion": 0.12
+      },
+      "statsPerLevel": {
+        "life": 7,
+        "attack": 1.5,
+        "defense": 0.5
+      },
+      "behavior": {
+        "type": "aggressive",
+        "aggroRadius": 8,
+        "leashRadius": 15,
+        "attackRange": 2.2,
+        "wanderRadius": 3.5
+      },
+      "abilities": [
+        "ash-dive"
+      ],
       "lootTable": "ash-moth-common",
       "xpReward": 9,
       "spriteAtlas": "ph-creature-ash-moth",
       "hurtboxRadius": 0.35,
       "colliderHalfSize": 0.25,
       "poise": 0.2,
-      "spawnRules": { "respawnSeconds": 20 }
+      "spawnRules": {
+        "respawnSeconds": 20,
+        "activeHours": null
+      },
+      "habitat": []
+    },
+    {
+      "id": "conejo-cola-algodon",
+      "name": "Conejo de cola de algodón",
+      "category": "fauna",
+      "biome": "temperate-forest",
+      "levelRange": [
+        1,
+        1
+      ],
+      "stats": {
+        "life": 12,
+        "energy": 0,
+        "attack": 0,
+        "power": 0,
+        "defense": 0,
+        "resistance": 0,
+        "speed": 4.0,
+        "attackRate": 1,
+        "crit": 0.0,
+        "evasion": 0.1
+      },
+      "statsPerLevel": {},
+      "behavior": {
+        "type": "fleeing",
+        "alertRadius": 6,
+        "fleeRadius": 3.5,
+        "fleeSeconds": 3,
+        "wanderRadius": 3
+      },
+      "abilities": [],
+      "lootTable": "conejo",
+      "xpReward": 3,
+      "spriteAtlas": "ph-creature-conejo",
+      "hurtboxRadius": 0.3,
+      "colliderHalfSize": 0.2,
+      "poise": 0,
+      "habitat": [
+        "grass"
+      ],
+      "spawnRules": {
+        "respawnSeconds": 30,
+        "activeHours": [
+          5,
+          22
+        ]
+      }
+    },
+    {
+      "id": "ciervo-cola-blanca",
+      "name": "Ciervo de cola blanca",
+      "category": "fauna",
+      "biome": "temperate-forest",
+      "levelRange": [
+        1,
+        2
+      ],
+      "stats": {
+        "life": 45,
+        "energy": 0,
+        "attack": 0,
+        "power": 0,
+        "defense": 2,
+        "resistance": 0,
+        "speed": 4.6,
+        "attackRate": 1,
+        "crit": 0.0,
+        "evasion": 0.05
+      },
+      "statsPerLevel": {
+        "life": 8
+      },
+      "behavior": {
+        "type": "fleeing",
+        "alertRadius": 9,
+        "fleeRadius": 5,
+        "fleeSeconds": 4,
+        "wanderRadius": 3
+      },
+      "abilities": [],
+      "lootTable": "ciervo",
+      "xpReward": 8,
+      "spriteAtlas": "ph-creature-ciervo",
+      "hurtboxRadius": 0.42,
+      "colliderHalfSize": 0.3,
+      "poise": 0.3,
+      "habitat": [
+        "grass",
+        "grass-dark"
+      ],
+      "spawnRules": {
+        "respawnSeconds": 60,
+        "activeHours": [
+          4,
+          22
+        ]
+      }
+    },
+    {
+      "id": "pavo-silvestre",
+      "name": "Pavo silvestre",
+      "category": "fauna",
+      "biome": "temperate-forest",
+      "levelRange": [
+        1,
+        2
+      ],
+      "stats": {
+        "life": 28,
+        "energy": 0,
+        "attack": 6,
+        "power": 0,
+        "defense": 2,
+        "resistance": 0,
+        "speed": 3.4,
+        "attackRate": 1,
+        "crit": 0.0,
+        "evasion": 0.0
+      },
+      "statsPerLevel": {
+        "life": 5,
+        "attack": 1
+      },
+      "behavior": {
+        "type": "neutral",
+        "retaliateSeconds": 8,
+        "leashRadius": 10,
+        "attackRange": 1.2,
+        "wanderRadius": 3
+      },
+      "abilities": [
+        "pavo-picotazo"
+      ],
+      "lootTable": "pavo",
+      "xpReward": 6,
+      "spriteAtlas": "ph-creature-pavo",
+      "hurtboxRadius": 0.35,
+      "colliderHalfSize": 0.25,
+      "poise": 0.2,
+      "habitat": [
+        "grass"
+      ],
+      "spawnRules": {
+        "respawnSeconds": 40,
+        "activeHours": [
+          6,
+          20
+        ]
+      }
+    },
+    {
+      "id": "pecari-de-collar",
+      "name": "Pecarí de collar",
+      "category": "fauna",
+      "biome": "temperate-forest",
+      "levelRange": [
+        2,
+        3
+      ],
+      "stats": {
+        "life": 55,
+        "energy": 0,
+        "attack": 10,
+        "power": 0,
+        "defense": 6,
+        "resistance": 4,
+        "speed": 3.8,
+        "attackRate": 1,
+        "crit": 0.0,
+        "evasion": 0.0
+      },
+      "statsPerLevel": {
+        "life": 10,
+        "attack": 2,
+        "defense": 1
+      },
+      "behavior": {
+        "type": "territorial",
+        "territoryRadius": 3.5,
+        "leashRadius": 9,
+        "attackRange": 1.6,
+        "wanderRadius": 2
+      },
+      "abilities": [
+        "pecari-embestida"
+      ],
+      "lootTable": "pecari",
+      "xpReward": 14,
+      "spriteAtlas": "ph-creature-pecari",
+      "hurtboxRadius": 0.4,
+      "colliderHalfSize": 0.3,
+      "poise": 0.6,
+      "habitat": [
+        "grass",
+        "grass-dark"
+      ],
+      "spawnRules": {
+        "respawnSeconds": 60,
+        "activeHours": null
+      }
     }
   ]
 }

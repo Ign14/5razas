@@ -1,5 +1,17 @@
 # Tareas
 
+## Hecho — 2026-10-31 (Fase 4: ecosistema)
+
+- [x] Reloj del mundo (día de 10 min) con hora y día en el HUD y oscuridad nocturna.
+- [x] Cuatro especies de fauna real con hábitat, horario, botín y comportamientos huidizo, neutral y territorial.
+- [x] Estado de alerta y huida de la fauna con indicador visual.
+- [x] Las 10 plantas ficticias del diseño con propiedades alquímicas, rareza, terreno, horario y regeneración.
+- [x] Zonas de recolección en el mapa Tiled; recolección con E, avisos y XP.
+- [x] 13 objetos nuevos (10 ingredientes, carne, cuero, pluma) y pestaña "Ingredientes" en el inventario.
+- [x] Aparición y desaparición de criaturas según su horario.
+- [x] Pruebas: 115 unitarias y 5 E2E.
+
+
 ## Hecho — 2026-10-31 (Fase 3: progresión)
 
 - [x] Curva de XP configurable, niveles 1–100, etapas Novato / Profesión I / Senior / Ascensión.
@@ -54,8 +66,9 @@
 
 ## Pendiente — siguiente
 
-- [ ] **Fase 4 — Ecosistema**: fauna real del bioma (aprobada) con comportamientos huidizo/neutral/territorial,
-      10 plantas ficticias, recolección (tecla E), recursos, aparición por condiciones.
+- [ ] **Fase 5 — Alquimia**: motor de recetas por datos (las combinaciones del §10.4), descubrimientos, interfaz
+      de experimentación, modificadores elementales en ataques y efectos temporales. Preparaciones de alimento.
+- [ ] Extraer `CreaturePopulation` de `WorldSimulation` (apariciones, horarios).
 - [ ] Reordenar el inventario arrastrando objetos (hoy la API `swap` existe pero no hay interfaz).
 - [ ] Descartar objetos desde el inventario.
 - [ ] Animaciones de ataque propias del personaje (hoy solo idle/caminar + efectos).

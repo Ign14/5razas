@@ -2,104 +2,582 @@
   "$comment": "Objetos del MVP (GAME_DESIGN §11). Nombres y valores ficticios y provisionales. Modificadores: op 'add' suma, 'mul' multiplica (1.06 = +6 %).",
   "items": [
     {
-      "id": "espina-dura", "name": "Espina dura", "description": "Espina endurecida de un Brote Espinoso. Material de fabricación.",
-      "category": "material", "rarity": "common", "maxStack": 99,
-      "icon": { "shape": "shard", "color": "#c8b46a" }, "equip": null, "use": null
-    },
-    {
-      "id": "polvo-ceniza", "name": "Polvo de ceniza", "description": "Polvo de las alas de una Polilla Ceniza. Material de fabricación.",
-      "category": "material", "rarity": "common", "maxStack": 99,
-      "icon": { "shape": "dust", "color": "#9b958c" }, "equip": null, "use": null
-    },
-    {
-      "id": "tonico-vital", "name": "Tónico vital", "description": "Restaura 45 puntos de vida.",
-      "category": "consumable", "rarity": "common", "maxStack": 20,
-      "icon": { "shape": "potion", "color": "#d9483a" }, "equip": null,
-      "use": { "effects": [{ "kind": "heal", "amount": 45 }], "cooldown": 6 }
-    },
-    {
-      "id": "tonico-energia", "name": "Tónico de energía", "description": "Restaura 40 puntos de energía.",
-      "category": "consumable", "rarity": "common", "maxStack": 20,
-      "icon": { "shape": "potion", "color": "#4aa8d9" }, "equip": null,
-      "use": { "effects": [{ "kind": "restoreEnergy", "amount": 40 }], "cooldown": 6 }
-    },
-    {
-      "id": "amuleto-de-musgo", "name": "Amuleto de musgo", "description": "Un amuleto ficticio que agudiza los golpes.",
-      "category": "accessory", "rarity": "uncommon", "maxStack": 1,
-      "icon": { "shape": "amulet", "color": "#7fb069" },
-      "equip": { "slot": "accessory", "levelRequirement": 3, "setId": null,
-        "modifiers": [{ "stat": "crit", "op": "add", "value": 0.04 }, { "stat": "power", "op": "add", "value": 6 }] },
-      "use": null
-    },
-
-    {
-      "id": "hoja-de-corteza", "name": "Hoja de corteza", "description": "Arma del conjunto Corteza.",
-      "category": "weapon", "rarity": "common", "maxStack": 1, "icon": { "shape": "blade", "color": "#a07850" },
-      "equip": { "slot": "weapon", "levelRequirement": 1, "setId": "corteza", "modifiers": [{ "stat": "attack", "op": "add", "value": 4 }] },
+      "id": "espina-dura",
+      "name": "Espina dura",
+      "description": "Espina endurecida de un Brote Espinoso. Material de fabricación.",
+      "category": "material",
+      "rarity": "common",
+      "maxStack": 99,
+      "icon": {
+        "shape": "shard",
+        "color": "#c8b46a"
+      },
+      "equip": null,
       "use": null
     },
     {
-      "id": "yelmo-de-corteza", "name": "Yelmo de corteza", "description": "Pieza del conjunto Corteza.",
-      "category": "armor", "rarity": "common", "maxStack": 1, "icon": { "shape": "helm", "color": "#a07850" },
-      "equip": { "slot": "head", "levelRequirement": 1, "setId": "corteza",
-        "modifiers": [{ "stat": "defense", "op": "add", "value": 3 }, { "stat": "life", "op": "add", "value": 10 }] },
+      "id": "polvo-ceniza",
+      "name": "Polvo de ceniza",
+      "description": "Polvo de las alas de una Polilla Ceniza. Material de fabricación.",
+      "category": "material",
+      "rarity": "common",
+      "maxStack": 99,
+      "icon": {
+        "shape": "dust",
+        "color": "#9b958c"
+      },
+      "equip": null,
       "use": null
     },
     {
-      "id": "peto-de-corteza", "name": "Peto de corteza", "description": "Pieza del conjunto Corteza.",
-      "category": "armor", "rarity": "common", "maxStack": 1, "icon": { "shape": "chest", "color": "#a07850" },
-      "equip": { "slot": "chest", "levelRequirement": 1, "setId": "corteza",
-        "modifiers": [{ "stat": "defense", "op": "add", "value": 5 }, { "stat": "life", "op": "add", "value": 20 }] },
+      "id": "tonico-vital",
+      "name": "Tónico vital",
+      "description": "Restaura 45 puntos de vida.",
+      "category": "consumable",
+      "rarity": "common",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#d9483a"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "heal",
+            "amount": 45
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "tonico-energia",
+      "name": "Tónico de energía",
+      "description": "Restaura 40 puntos de energía.",
+      "category": "consumable",
+      "rarity": "common",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#4aa8d9"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "restoreEnergy",
+            "amount": 40
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "amuleto-de-musgo",
+      "name": "Amuleto de musgo",
+      "description": "Un amuleto ficticio que agudiza los golpes.",
+      "category": "accessory",
+      "rarity": "uncommon",
+      "maxStack": 1,
+      "icon": {
+        "shape": "amulet",
+        "color": "#7fb069"
+      },
+      "equip": {
+        "slot": "accessory",
+        "levelRequirement": 3,
+        "setId": null,
+        "modifiers": [
+          {
+            "stat": "crit",
+            "op": "add",
+            "value": 0.04
+          },
+          {
+            "stat": "power",
+            "op": "add",
+            "value": 6
+          }
+        ]
+      },
       "use": null
     },
     {
-      "id": "grebas-de-corteza", "name": "Grebas de corteza", "description": "Pieza del conjunto Corteza.",
-      "category": "armor", "rarity": "common", "maxStack": 1, "icon": { "shape": "legs", "color": "#a07850" },
-      "equip": { "slot": "legs", "levelRequirement": 1, "setId": "corteza",
-        "modifiers": [{ "stat": "defense", "op": "add", "value": 3 }, { "stat": "life", "op": "add", "value": 10 }] },
+      "id": "hoja-de-corteza",
+      "name": "Hoja de corteza",
+      "description": "Arma del conjunto Corteza.",
+      "category": "weapon",
+      "rarity": "common",
+      "maxStack": 1,
+      "icon": {
+        "shape": "blade",
+        "color": "#a07850"
+      },
+      "equip": {
+        "slot": "weapon",
+        "levelRequirement": 1,
+        "setId": "corteza",
+        "modifiers": [
+          {
+            "stat": "attack",
+            "op": "add",
+            "value": 4
+          }
+        ]
+      },
       "use": null
     },
     {
-      "id": "botas-de-corteza", "name": "Botas de corteza", "description": "Pieza del conjunto Corteza.",
-      "category": "armor", "rarity": "common", "maxStack": 1, "icon": { "shape": "boots", "color": "#a07850" },
-      "equip": { "slot": "feet", "levelRequirement": 1, "setId": "corteza",
-        "modifiers": [{ "stat": "defense", "op": "add", "value": 2 }, { "stat": "speed", "op": "add", "value": 0.2 }] },
-      "use": null
-    },
-
-    {
-      "id": "hoja-de-raiz", "name": "Hoja de raíz profunda", "description": "Arma del conjunto Raíz profunda.",
-      "category": "weapon", "rarity": "rare", "maxStack": 1, "icon": { "shape": "blade", "color": "#6b8f3a" },
-      "equip": { "slot": "weapon", "levelRequirement": 12, "setId": "raiz-profunda",
-        "modifiers": [{ "stat": "attack", "op": "add", "value": 12 }, { "stat": "power", "op": "add", "value": 4 }] },
-      "use": null
-    },
-    {
-      "id": "yelmo-de-raiz", "name": "Yelmo de raíz profunda", "description": "Pieza del conjunto Raíz profunda.",
-      "category": "armor", "rarity": "rare", "maxStack": 1, "icon": { "shape": "helm", "color": "#6b8f3a" },
-      "equip": { "slot": "head", "levelRequirement": 12, "setId": "raiz-profunda",
-        "modifiers": [{ "stat": "defense", "op": "add", "value": 8 }, { "stat": "life", "op": "add", "value": 30 }] },
-      "use": null
-    },
-    {
-      "id": "peto-de-raiz", "name": "Peto de raíz profunda", "description": "Pieza del conjunto Raíz profunda.",
-      "category": "armor", "rarity": "rare", "maxStack": 1, "icon": { "shape": "chest", "color": "#6b8f3a" },
-      "equip": { "slot": "chest", "levelRequirement": 12, "setId": "raiz-profunda",
-        "modifiers": [{ "stat": "defense", "op": "add", "value": 12 }, { "stat": "life", "op": "add", "value": 55 }] },
-      "use": null
-    },
-    {
-      "id": "grebas-de-raiz", "name": "Grebas de raíz profunda", "description": "Pieza del conjunto Raíz profunda.",
-      "category": "armor", "rarity": "rare", "maxStack": 1, "icon": { "shape": "legs", "color": "#6b8f3a" },
-      "equip": { "slot": "legs", "levelRequirement": 12, "setId": "raiz-profunda",
-        "modifiers": [{ "stat": "defense", "op": "add", "value": 8 }, { "stat": "life", "op": "add", "value": 30 }] },
+      "id": "yelmo-de-corteza",
+      "name": "Yelmo de corteza",
+      "description": "Pieza del conjunto Corteza.",
+      "category": "armor",
+      "rarity": "common",
+      "maxStack": 1,
+      "icon": {
+        "shape": "helm",
+        "color": "#a07850"
+      },
+      "equip": {
+        "slot": "head",
+        "levelRequirement": 1,
+        "setId": "corteza",
+        "modifiers": [
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 3
+          },
+          {
+            "stat": "life",
+            "op": "add",
+            "value": 10
+          }
+        ]
+      },
       "use": null
     },
     {
-      "id": "botas-de-raiz", "name": "Botas de raíz profunda", "description": "Pieza del conjunto Raíz profunda.",
-      "category": "armor", "rarity": "rare", "maxStack": 1, "icon": { "shape": "boots", "color": "#6b8f3a" },
-      "equip": { "slot": "feet", "levelRequirement": 12, "setId": "raiz-profunda",
-        "modifiers": [{ "stat": "defense", "op": "add", "value": 5 }, { "stat": "speed", "op": "add", "value": 0.3 }] },
+      "id": "peto-de-corteza",
+      "name": "Peto de corteza",
+      "description": "Pieza del conjunto Corteza.",
+      "category": "armor",
+      "rarity": "common",
+      "maxStack": 1,
+      "icon": {
+        "shape": "chest",
+        "color": "#a07850"
+      },
+      "equip": {
+        "slot": "chest",
+        "levelRequirement": 1,
+        "setId": "corteza",
+        "modifiers": [
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 5
+          },
+          {
+            "stat": "life",
+            "op": "add",
+            "value": 20
+          }
+        ]
+      },
+      "use": null
+    },
+    {
+      "id": "grebas-de-corteza",
+      "name": "Grebas de corteza",
+      "description": "Pieza del conjunto Corteza.",
+      "category": "armor",
+      "rarity": "common",
+      "maxStack": 1,
+      "icon": {
+        "shape": "legs",
+        "color": "#a07850"
+      },
+      "equip": {
+        "slot": "legs",
+        "levelRequirement": 1,
+        "setId": "corteza",
+        "modifiers": [
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 3
+          },
+          {
+            "stat": "life",
+            "op": "add",
+            "value": 10
+          }
+        ]
+      },
+      "use": null
+    },
+    {
+      "id": "botas-de-corteza",
+      "name": "Botas de corteza",
+      "description": "Pieza del conjunto Corteza.",
+      "category": "armor",
+      "rarity": "common",
+      "maxStack": 1,
+      "icon": {
+        "shape": "boots",
+        "color": "#a07850"
+      },
+      "equip": {
+        "slot": "feet",
+        "levelRequirement": 1,
+        "setId": "corteza",
+        "modifiers": [
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 2
+          },
+          {
+            "stat": "speed",
+            "op": "add",
+            "value": 0.2
+          }
+        ]
+      },
+      "use": null
+    },
+    {
+      "id": "hoja-de-raiz",
+      "name": "Hoja de raíz profunda",
+      "description": "Arma del conjunto Raíz profunda.",
+      "category": "weapon",
+      "rarity": "rare",
+      "maxStack": 1,
+      "icon": {
+        "shape": "blade",
+        "color": "#6b8f3a"
+      },
+      "equip": {
+        "slot": "weapon",
+        "levelRequirement": 12,
+        "setId": "raiz-profunda",
+        "modifiers": [
+          {
+            "stat": "attack",
+            "op": "add",
+            "value": 12
+          },
+          {
+            "stat": "power",
+            "op": "add",
+            "value": 4
+          }
+        ]
+      },
+      "use": null
+    },
+    {
+      "id": "yelmo-de-raiz",
+      "name": "Yelmo de raíz profunda",
+      "description": "Pieza del conjunto Raíz profunda.",
+      "category": "armor",
+      "rarity": "rare",
+      "maxStack": 1,
+      "icon": {
+        "shape": "helm",
+        "color": "#6b8f3a"
+      },
+      "equip": {
+        "slot": "head",
+        "levelRequirement": 12,
+        "setId": "raiz-profunda",
+        "modifiers": [
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 8
+          },
+          {
+            "stat": "life",
+            "op": "add",
+            "value": 30
+          }
+        ]
+      },
+      "use": null
+    },
+    {
+      "id": "peto-de-raiz",
+      "name": "Peto de raíz profunda",
+      "description": "Pieza del conjunto Raíz profunda.",
+      "category": "armor",
+      "rarity": "rare",
+      "maxStack": 1,
+      "icon": {
+        "shape": "chest",
+        "color": "#6b8f3a"
+      },
+      "equip": {
+        "slot": "chest",
+        "levelRequirement": 12,
+        "setId": "raiz-profunda",
+        "modifiers": [
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 12
+          },
+          {
+            "stat": "life",
+            "op": "add",
+            "value": 55
+          }
+        ]
+      },
+      "use": null
+    },
+    {
+      "id": "grebas-de-raiz",
+      "name": "Grebas de raíz profunda",
+      "description": "Pieza del conjunto Raíz profunda.",
+      "category": "armor",
+      "rarity": "rare",
+      "maxStack": 1,
+      "icon": {
+        "shape": "legs",
+        "color": "#6b8f3a"
+      },
+      "equip": {
+        "slot": "legs",
+        "levelRequirement": 12,
+        "setId": "raiz-profunda",
+        "modifiers": [
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 8
+          },
+          {
+            "stat": "life",
+            "op": "add",
+            "value": 30
+          }
+        ]
+      },
+      "use": null
+    },
+    {
+      "id": "botas-de-raiz",
+      "name": "Botas de raíz profunda",
+      "description": "Pieza del conjunto Raíz profunda.",
+      "category": "armor",
+      "rarity": "rare",
+      "maxStack": 1,
+      "icon": {
+        "shape": "boots",
+        "color": "#6b8f3a"
+      },
+      "equip": {
+        "slot": "feet",
+        "levelRequirement": 12,
+        "setId": "raiz-profunda",
+        "modifiers": [
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 5
+          },
+          {
+            "stat": "speed",
+            "op": "add",
+            "value": 0.3
+          }
+        ]
+      },
+      "use": null
+    },
+    {
+      "id": "hoja-carmesi",
+      "name": "Hoja Carmesí",
+      "description": "Planta de fantasía. Propiedades alquímicas: Fuego 2.",
+      "category": "ingredient",
+      "rarity": "common",
+      "maxStack": 50,
+      "icon": {
+        "shape": "leaf",
+        "color": "#c0392b"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "raiz-solar",
+      "name": "Raíz Solar",
+      "description": "Planta de fantasía. Propiedades alquímicas: Fuego 1, Vital 1.",
+      "category": "ingredient",
+      "rarity": "uncommon",
+      "maxStack": 50,
+      "icon": {
+        "shape": "root",
+        "color": "#e0a030"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "flor-de-escarcha",
+      "name": "Flor de Escarcha",
+      "description": "Planta de fantasía. Propiedades alquímicas: Hielo 2.",
+      "category": "ingredient",
+      "rarity": "uncommon",
+      "maxStack": 50,
+      "icon": {
+        "shape": "flower",
+        "color": "#a8e0f0"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "hongo-azul",
+      "name": "Hongo Azul",
+      "description": "Planta de fantasía. Propiedades alquímicas: Hielo 1, Electricidad 1.",
+      "category": "ingredient",
+      "rarity": "uncommon",
+      "maxStack": 50,
+      "icon": {
+        "shape": "mushroom",
+        "color": "#3a7bd5"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "espora-umbria",
+      "name": "Espora Umbría",
+      "description": "Planta de fantasía. Propiedades alquímicas: Veneno 2.",
+      "category": "ingredient",
+      "rarity": "common",
+      "maxStack": 50,
+      "icon": {
+        "shape": "spore",
+        "color": "#7a4a9a"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "savia-gris",
+      "name": "Savia Gris",
+      "description": "Planta de fantasía. Propiedades alquímicas: Veneno 1.",
+      "category": "ingredient",
+      "rarity": "common",
+      "maxStack": 50,
+      "icon": {
+        "shape": "sap",
+        "color": "#8a8f9c"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "semilla-del-viento",
+      "name": "Semilla del Viento",
+      "description": "Planta de fantasía. Propiedades alquímicas: Viento 2.",
+      "category": "ingredient",
+      "rarity": "common",
+      "maxStack": 50,
+      "icon": {
+        "shape": "seed",
+        "color": "#d8e8c0"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "hoja-ligera",
+      "name": "Hoja Ligera",
+      "description": "Planta de fantasía. Propiedades alquímicas: Viento 1.",
+      "category": "ingredient",
+      "rarity": "common",
+      "maxStack": 50,
+      "icon": {
+        "shape": "leaf",
+        "color": "#b8e07a"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "raiz-vital",
+      "name": "Raíz Vital",
+      "description": "Planta de fantasía. Propiedades alquímicas: Vital 2.",
+      "category": "ingredient",
+      "rarity": "uncommon",
+      "maxStack": 50,
+      "icon": {
+        "shape": "root",
+        "color": "#d96a5a"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "flor-dorada",
+      "name": "Flor Dorada",
+      "description": "Planta de fantasía. Propiedades alquímicas: Vital 2.",
+      "category": "ingredient",
+      "rarity": "rare",
+      "maxStack": 50,
+      "icon": {
+        "shape": "flower",
+        "color": "#f2c84a"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "carne-silvestre",
+      "name": "Carne silvestre",
+      "description": "Ingrediente para preparaciones de alimento.",
+      "category": "ingredient",
+      "rarity": "common",
+      "maxStack": 50,
+      "icon": {
+        "shape": "meat",
+        "color": "#b5524a"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "cuero",
+      "name": "Cuero",
+      "description": "Material de fabricación.",
+      "category": "material",
+      "rarity": "common",
+      "maxStack": 50,
+      "icon": {
+        "shape": "hide",
+        "color": "#8a5a3a"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "pluma",
+      "name": "Pluma",
+      "description": "Material de fabricación.",
+      "category": "material",
+      "rarity": "common",
+      "maxStack": 99,
+      "icon": {
+        "shape": "feather",
+        "color": "#e8e0d0"
+      },
+      "equip": null,
       "use": null
     }
   ]

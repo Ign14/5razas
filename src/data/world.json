@@ -1,0 +1,5 @@
+{
+  "$comment": "Ciclo de día y noche: un día de juego dura dayLengthSeconds segundos reales.",
+  "dayLengthSeconds": 600,
+  "startHour": 8
+}

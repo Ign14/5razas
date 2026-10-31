@@ -39,6 +39,26 @@ export const STARTING_SPAWN_ZONES = [
   { id: 'brotes-este', creatureId: 'thorn-sprout', x: 54.5, y: 36.5, radius: 3, count: 2 },
   { id: 'polillas-lago', creatureId: 'ash-moth', x: 41.5, y: 14.5, radius: 3, count: 3 },
   { id: 'polillas-noroeste', creatureId: 'ash-moth', x: 12.5, y: 14.5, radius: 4, count: 2 },
+  // Fauna (Fase 4).
+  { id: 'conejos-pradera-norte', creatureId: 'conejo-cola-algodon', x: 26.5, y: 6.5, radius: 4, count: 3 },
+  { id: 'conejos-suroeste', creatureId: 'conejo-cola-algodon', x: 5.5, y: 40.5, radius: 3, count: 2 },
+  { id: 'ciervos-oeste', creatureId: 'ciervo-cola-blanca', x: 7.5, y: 26.5, radius: 3, count: 2 },
+  { id: 'pavos-este', creatureId: 'pavo-silvestre', x: 56.5, y: 46.5, radius: 4, count: 3 },
+  { id: 'pecaries-sureste', creatureId: 'pecari-de-collar', x: 45.5, y: 57.5, radius: 2.5, count: 2 },
+] as const;
+
+/** Zonas de recolección de plantas (Fase 4). */
+export const STARTING_GATHER_ZONES = [
+  { id: 'hoja-carmesi-sendero', plantId: 'hoja-carmesi', x: 22.5, y: 36.5, radius: 4, count: 4 },
+  { id: 'raiz-solar-cantera', plantId: 'raiz-solar', x: 14.5, y: 46.5, radius: 5, count: 3 },
+  { id: 'flor-escarcha-orilla', plantId: 'flor-de-escarcha', x: 42.5, y: 24.5, radius: 3, count: 3 },
+  { id: 'hongo-azul-bosque', plantId: 'hongo-azul', x: 20.5, y: 18.5, radius: 4, count: 3 },
+  { id: 'espora-umbria-sur', plantId: 'espora-umbria', x: 44.5, y: 56.5, radius: 4, count: 3 },
+  { id: 'savia-gris-claro', plantId: 'savia-gris', x: 26.5, y: 27.5, radius: 3, count: 3 },
+  { id: 'semilla-viento-norte', plantId: 'semilla-del-viento', x: 30.5, y: 5.5, radius: 5, count: 3 },
+  { id: 'hoja-ligera-norte', plantId: 'hoja-ligera', x: 40.5, y: 6.5, radius: 4, count: 3 },
+  { id: 'raiz-vital-oeste', plantId: 'raiz-vital', x: 4.5, y: 17.5, radius: 3, count: 3 },
+  { id: 'flor-dorada-este', plantId: 'flor-dorada', x: 54.5, y: 30.5, radius: 3, count: 2 },
 ] as const;
 
 export interface TiledMapJson {
@@ -146,7 +166,7 @@ export function generateStartingSector(opts: GeneratorOptions): TiledMapJson {
     tileheight: 32,
     tilewidth: 64,
     nextlayerid: 6,
-    nextobjectid: 2 + STARTING_SPAWN_ZONES.length,
+    nextobjectid: 2 + STARTING_SPAWN_ZONES.length + STARTING_GATHER_ZONES.length,
     properties: [
       { name: 'mapId', type: 'string', value: opts.mapId },
       { name: 'name', type: 'string', value: opts.name },
@@ -213,6 +233,23 @@ export function generateStartingSector(opts: GeneratorOptions): TiledMapJson {
             properties: [
               { name: 'count', type: 'int', value: z.count },
               { name: 'creatureId', type: 'string', value: z.creatureId },
+              { name: 'radius', type: 'float', value: z.radius },
+            ],
+          })),
+          ...STARTING_GATHER_ZONES.map((z, i) => ({
+            id: 2 + STARTING_SPAWN_ZONES.length + i,
+            name: z.id,
+            type: 'gather-zone',
+            point: true,
+            rotation: 0,
+            visible: true,
+            width: 0,
+            height: 0,
+            x: z.x * 32,
+            y: z.y * 32,
+            properties: [
+              { name: 'count', type: 'int', value: z.count },
+              { name: 'plantId', type: 'string', value: z.plantId },
               { name: 'radius', type: 'float', value: z.radius },
             ],
           })),

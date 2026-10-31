@@ -81,3 +81,20 @@ Las pulsaciones y clics hechos sobre el inventario se descartan para que no se c
 
 ## D-020 — Las habilidades se desbloquean en los niveles 2 a 5
 Introduce las acciones de forma gradual en los primeros minutos. Ataque básico y evasión desde el nivel 1.
+
+## D-021 — Fauna real elegida para el bosque templado inicial (2026-10-31)
+Aprobado por el usuario usar fauna real como fauna natural. Especies del continente americano con hábitats de
+bosque/pradera: conejo de cola de algodón, ciervo de cola blanca, pavo silvestre y pecarí de collar. Se presentan
+como animales, sin vínculo cultural ni mecánicas sobrenaturales; los comportamientos son simplificaciones de juego.
+
+## D-022 — Ciclo de día y noche ligero
+Implementado solo para las "condiciones de aparición" (§8) y las "condiciones ambientales" de las plantas (§10.1).
+Su efecto visual es una capa de oscuridad. Sin iluminación dinámica (fuera de alcance del MVP).
+
+## D-023 — Comportamientos como unión discriminada
+Cada tipo de comportamiento declara solo sus parámetros (p. ej. `territoryRadius` solo en `territorial`), validados
+por datos. Evita campos sin sentido y permite al compilador comprobar cada caso en la IA.
+
+## D-024 — Recolección instantánea con bloqueo breve
+Pulsar E recolecta al momento y bloquea al personaje 0,4 s. Una animación de canalización interrumpible puede
+añadirse más adelante sin cambiar las reglas.

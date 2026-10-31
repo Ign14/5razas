@@ -2,7 +2,8 @@ import type { Vec2 } from '../math/vector.ts';
 import type { Stats } from './stats.ts';
 import type { ActiveStatus } from './statusEffects.ts';
 
-export type Team = 'player' | 'hostile';
+/** player = jugador; hostile = enemigos; wild = fauna (GAME_DESIGN §8). */
+export type Team = 'player' | 'hostile' | 'wild';
 
 export interface CombatantInit {
   readonly id: string;

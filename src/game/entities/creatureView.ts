@@ -11,6 +11,7 @@ const HURT_FLASH = 0.1;
 export class CreatureView {
   private readonly sprite: Phaser.GameObjects.Sprite;
   private readonly bar: HealthBar;
+  private readonly alertMark: Phaser.GameObjects.Text;
   private readonly iso: IsoMetrics;
   private readonly scene: Phaser.Scene;
   private hurtFlashUntil = 0;
@@ -25,6 +26,10 @@ export class CreatureView {
     this.sprite.setAlpha(0);
     scene.tweens.add({ targets: this.sprite, alpha: 1, duration: 400 });
     this.bar = new HealthBar(scene);
+    this.alertMark = scene.add
+      .text(0, 0, '!', { fontFamily: 'monospace', fontSize: '16px', color: '#ffd84a', stroke: '#000', strokeThickness: 4 })
+      .setOrigin(0.5, 1)
+      .setVisible(false);
   }
 
   hurt(time: number): void {
@@ -47,11 +52,23 @@ export class CreatureView {
     this.sprite.setFlipX(c.motion.facing.includes('w'));
     applyCombatVisuals(this.sprite, c.combatant, time, this.hurtFlashUntil, this.telegraphUntil);
     this.bar.draw(p.x, p.y - 38, c.combatant.hp / c.combatant.stats.life, depth + 0.2);
+    // Estado de alerta de la fauna (GAME_DESIGN §8).
+    const alert = c.brain.state === 'alert' || c.brain.state === 'flee';
+    this.alertMark.setVisible(alert).setPosition(p.x, p.y - 40).setDepth(depth + 0.3);
+    this.alertMark.setColor(c.brain.state === 'flee' ? '#ff8a3a' : '#ffd84a');
+  }
+
+  /** Desaparición silenciosa (fuera de horario, lejos del jugador). */
+  despawn(): void {
+    this.bar.destroy();
+    this.alertMark.destroy();
+    this.scene.tweens.add({ targets: this.sprite, alpha: 0, duration: 400, onComplete: () => { this.sprite.destroy(); } });
   }
 
   /** Animación de derrota y liberación de recursos. */
   defeat(): void {
     this.bar.destroy();
+    this.alertMark.destroy();
     this.sprite.setTintFill(0xffffff);
     this.scene.tweens.add({
       targets: this.sprite,

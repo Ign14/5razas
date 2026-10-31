@@ -30,6 +30,7 @@ Node ≥ 22.12.
 | Evasión | Espacio |
 | Consumibles rápidos | Q, F |
 | Inventario y equipo | I (Esc para cerrar) |
+| Recolectar | E |
 | Comenzar partida | ENTER o clic |
 
 Las teclas se configuran en `src/data/controls.json`.

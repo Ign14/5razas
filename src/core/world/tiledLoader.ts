@@ -1,7 +1,7 @@
 import { ID_PATTERN, Issues, isRecord } from '../data/validate.ts';
 import type { Vec2 } from '../math/vector.ts';
 import { MAP_LAYERS, type MapLayerId, type TileCatalog } from './tileCatalog.ts';
-import { WorldMap, type SpawnZone } from './worldMap.ts';
+import { WorldMap, type GatherZone, type SpawnZone } from './worldMap.ts';
 
 /**
  * Cargador de mapas en formato JSON de Tiled (https://doc.mapeditor.org/en/stable/reference/json-map-format/).
@@ -11,7 +11,8 @@ import { WorldMap, type SpawnZone } from './worldMap.ts';
  * - Tilesets embebidos; cada tile declara la propiedad string `tileId` que referencia el catálogo.
  * - Capas de tiles nombradas como las capas lógicas (ground, detail, paths, objects).
  * - Grupo de objetos "markers" con un objeto de tipo "spawn" y, opcionalmente, objetos "spawn-zone"
- *   con propiedades creatureId (string), count (int) y radius (float, en celdas).
+ *   con propiedades creatureId (string), count (int) y radius (float, en celdas), y objetos "gather-zone"
+ *   con plantId (string), count (int) y radius (float).
  */
 
 /** Bits de volteo que Tiled codifica en los GID. */
@@ -86,6 +87,7 @@ export function parseTiledMap(
   const layers: Partial<Record<MapLayerId, (string | null)[]>> = {};
   let spawn: Vec2 | undefined;
   const spawnZones: SpawnZone[] = [];
+  const gatherZones: GatherZone[] = [];
 
   issues.array(map['layers'], '$.layers')?.forEach((l, i) => {
     const p = `$.layers[${i}]`;
@@ -131,7 +133,7 @@ export function parseTiledMap(
         if (!obj) return;
         // Tiled ≥1.9 usa "class" en algunas versiones y "type" en otras.
         const kind = obj['type'] ?? obj['class'];
-        if ((kind !== 'spawn' && kind !== 'spawn-zone') || tileHeight === undefined) return;
+        if ((kind !== 'spawn' && kind !== 'spawn-zone' && kind !== 'gather-zone') || tileHeight === undefined) return;
         const ox = issues.number(obj['x'], `${op}.x`);
         const oy = issues.number(obj['y'], `${op}.y`);
         if (ox === undefined || oy === undefined) return;
@@ -142,6 +144,19 @@ export function parseTiledMap(
           return;
         }
         const props = obj['properties'];
+        if (kind === 'gather-zone') {
+          const g = {
+            id: issues.string(obj['name'], `${op}.name`, { pattern: ID_PATTERN }),
+            plantId: issues.string(property(props, 'plantId'), `${op}.properties.plantId`, { pattern: ID_PATTERN }),
+            count: issues.number(property(props, 'count'), `${op}.properties.count`, { integer: true, min: 1, max: 50 }),
+            radius: issues.number(property(props, 'radius'), `${op}.properties.radius`, { min: 0.5, max: 32 }),
+          };
+          if (g.id && gatherZones.some((z) => z.id === g.id)) issues.add(`${op}.name`, `zona duplicada "${g.id}"`);
+          if (g.id && g.plantId && g.count !== undefined && g.radius !== undefined) {
+            gatherZones.push({ id: g.id, plantId: g.plantId, count: g.count, radius: g.radius, center: position });
+          }
+          return;
+        }
         const zone = {
           id: issues.string(obj['name'], `${op}.name`, { pattern: ID_PATTERN }),
           creatureId: issues.string(property(props, 'creatureId'), `${op}.properties.creatureId`, { pattern: ID_PATTERN }),
@@ -173,6 +188,7 @@ export function parseTiledMap(
     layers: layers as Record<MapLayerId, (string | null)[]>,
     spawn: spawn as Vec2,
     spawnZones,
+    gatherZones,
     catalog,
   });
   const s = spawn as Vec2;

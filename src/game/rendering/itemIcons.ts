@@ -94,6 +94,60 @@ function paint(ctx: CanvasRenderingContext2D, item: ItemDefinition): void {
       }
       px(11, 4, 1, 16, dark);
       break;
+    case 'root':
+      px(10, 3, 5, 6, color);
+      for (let i = 0; i < 12; i++) px(11 + Math.round(Math.sin(i / 2) * 2), 8 + i, 2, 1, dark);
+      px(7, 13, 4, 1, dark);
+      px(14, 15, 4, 1, dark);
+      px(11, 4, 2, 2, light);
+      break;
+    case 'flower':
+      px(11, 12, 2, 9, '#4c7a2e');
+      for (const [x, y] of [[8, 6], [14, 6], [8, 11], [14, 11], [11, 3]] as const) px(x, y, 4, 4, color);
+      px(11, 8, 4, 4, light);
+      break;
+    case 'mushroom':
+      px(10, 12, 5, 8, '#e6dcc0');
+      px(5, 6, 15, 6, dark);
+      px(6, 5, 13, 6, color);
+      px(8, 6, 2, 2, light);
+      px(14, 7, 2, 2, light);
+      break;
+    case 'seed':
+      for (const [x, y] of [[7, 10], [12, 7], [15, 12], [10, 15]] as const) {
+        px(x, y, 4, 5, dark);
+        px(x + 1, y, 2, 4, color);
+      }
+      px(13, 4, 1, 4, light);
+      break;
+    case 'sap':
+      px(9, 4, 6, 4, light);
+      px(7, 8, 10, 10, dark);
+      px(8, 9, 8, 8, color);
+      px(9, 10, 2, 3, light);
+      break;
+    case 'spore':
+      for (const [x, y, r] of [[8, 9, 3], [15, 8, 2], [13, 15, 4], [7, 16, 2]] as const) {
+        px(x - r, y - r + 1, r * 2, r * 2 - 2, color);
+        px(x - r + 1, y - r, r * 2 - 2, r * 2, dark);
+      }
+      break;
+    case 'meat':
+      px(5, 8, 12, 9, dark);
+      px(6, 9, 10, 7, color);
+      px(16, 11, 5, 3, '#e6dcc0');
+      px(8, 10, 3, 2, light);
+      break;
+    case 'hide':
+      px(4, 5, 16, 14, dark);
+      px(5, 6, 14, 12, color);
+      px(8, 9, 3, 2, light);
+      px(13, 13, 3, 2, light);
+      break;
+    case 'feather':
+      for (let i = 0; i < 14; i++) px(6 + i, 18 - i, 1, 1, dark);
+      for (let i = 2; i < 13; i++) px(7 + i, 18 - i - 3, 3, 3, i % 3 === 0 ? light : color);
+      break;
   }
 }
 
