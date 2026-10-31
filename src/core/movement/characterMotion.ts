@@ -1,4 +1,4 @@
-import { screenDirToCellDir } from '../math/iso.ts';
+import { cellToScreen, screenDirToCellDir } from '../math/iso.ts';
 import { normalize, scale, type Vec2 } from '../math/vector.ts';
 import { moveWithCollisions, type CollisionMap } from '../world/collision.ts';
 import { directionFromScreenVector, type Direction } from './direction.ts';
@@ -31,12 +31,37 @@ export function stepMotion(
   map: CollisionMap,
   params: MotionParams,
 ): MotionState {
-  const dt = Math.min(Math.max(dtSeconds, 0), MAX_DT_SECONDS);
   const facing = directionFromScreenVector(screenIntent);
-  if (facing === null || dt === 0) {
+  return advance(state, normalize(screenDirToCellDir(screenIntent)), facing, dtSeconds, map, params);
+}
+
+/**
+ * Variante para entidades controladas por IA: la dirección ya está expresada en celdas.
+ * La orientación visual se obtiene proyectando la dirección a pantalla.
+ */
+export function stepMotionCells(
+  state: MotionState,
+  cellDir: Vec2,
+  dtSeconds: number,
+  map: CollisionMap,
+  params: MotionParams,
+): MotionState {
+  const dir = normalize(cellDir);
+  return advance(state, dir, directionFromScreenVector(cellToScreen(dir)), dtSeconds, map, params);
+}
+
+function advance(
+  state: MotionState,
+  cellDir: Vec2,
+  facing: Direction | null,
+  dtSeconds: number,
+  map: CollisionMap,
+  params: MotionParams,
+): MotionState {
+  const dt = Math.min(Math.max(dtSeconds, 0), MAX_DT_SECONDS);
+  if (facing === null || dt === 0 || params.moveSpeed <= 0) {
     return { position: state.position, facing: facing ?? state.facing, moving: false };
   }
-  const cellDir = normalize(screenDirToCellDir(screenIntent));
   const delta = scale(cellDir, params.moveSpeed * dt);
   const result = moveWithCollisions(map, state.position, delta, { halfSize: params.colliderHalfSize });
   const moved = result.position.x !== state.position.x || result.position.y !== state.position.y;

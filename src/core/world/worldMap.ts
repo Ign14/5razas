@@ -6,6 +6,15 @@ import type { MapLayerId, TileCatalog } from './tileCatalog.ts';
 /** Contenido de una capa: id de tile por celda o null si está vacía. Fila mayor. */
 export type LayerCells = readonly (string | null)[];
 
+/** Zona de aparición de criaturas, definida en el mapa (objeto Tiled de tipo "spawn-zone"). */
+export interface SpawnZone {
+  readonly id: string;
+  readonly creatureId: string;
+  readonly center: Vec2;
+  readonly radius: number;
+  readonly count: number;
+}
+
 /** Sector del mundo ya validado, independiente del formato de origen y de Phaser. */
 export class WorldMap implements CollisionMap {
   readonly id: string;
@@ -15,6 +24,7 @@ export class WorldMap implements CollisionMap {
   readonly iso: IsoMetrics;
   readonly layers: Readonly<Record<MapLayerId, LayerCells>>;
   readonly spawn: Vec2;
+  readonly spawnZones: readonly SpawnZone[];
   readonly catalog: TileCatalog;
   private readonly blocked: Uint8Array;
 
@@ -26,6 +36,7 @@ export class WorldMap implements CollisionMap {
     iso: IsoMetrics;
     layers: Readonly<Record<MapLayerId, LayerCells>>;
     spawn: Vec2;
+    spawnZones?: readonly SpawnZone[];
     catalog: TileCatalog;
   }) {
     const { width, height, layers, catalog } = init;
@@ -36,6 +47,7 @@ export class WorldMap implements CollisionMap {
     this.iso = init.iso;
     this.layers = layers;
     this.spawn = init.spawn;
+    this.spawnZones = init.spawnZones ?? [];
     this.catalog = catalog;
     this.blocked = new Uint8Array(width * height);
     for (const layer of Object.values(layers)) {

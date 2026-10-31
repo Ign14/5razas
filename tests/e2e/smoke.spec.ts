@@ -55,3 +55,37 @@ test('las colisiones impiden salir del mapa', async ({ page }) => {
   expect(p?.y).toBeLessThanOrEqual(64);
   expect(p?.moving).toBe(false);
 });
+
+test('combate: habilidades consumen energía, entran en recuperación y hay criaturas', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__5RAZAS__ !== undefined);
+  const debug = () => page.evaluate(() => {
+    const d = window.__5RAZAS__;
+    return d ? { player: d.player(), cooldowns: d.cooldowns(), creatures: d.creatures().length } : null;
+  });
+
+  const before = await debug();
+  expect(before?.creatures).toBeGreaterThanOrEqual(10);
+  expect(before?.player.energy).toBe(100);
+
+  // Corte Circular (tecla 2) e inmediatamente Protección (tecla 3). Se sondea porque el FPS del navegador
+  // headless varía y el tiempo de juego avanza por fotogramas.
+  await page.keyboard.press('2');
+  await page.keyboard.press('3');
+  await expect.poll(async () => (await debug())?.cooldowns['power2'] ?? 0).toBeGreaterThan(4);
+  expect((await debug())?.player.energy).toBeLessThan(100);
+
+  // La tecla 3 (Protección del Bosque) se pulsó durante la preparación del Corte Circular: el
+  // búfer de entrada la ejecuta al quedar libre. Luego, evasión (Espacio) y ataque básico (clic).
+  await expect.poll(async () => (await debug())?.cooldowns['power3'] ?? 0).toBeGreaterThan(10);
+  await page.keyboard.press('Space');
+  await expect.poll(async () => (await debug())?.cooldowns['dodge'] ?? 0).toBeGreaterThan(0);
+  await page.mouse.click(700, 360);
+  await expect.poll(async () => (await debug())?.cooldowns['basic'] ?? 0).toBeGreaterThan(0);
+
+  await page.screenshot({ path: 'test-results/03-combat.png' });
+  expect(errors).toEqual([]);
+});

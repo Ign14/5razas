@@ -1,7 +1,12 @@
 {
-  "$comment": "Asignación de teclas por acción. Nombres de tecla según Phaser.Input.Keyboard.KeyCodes.",
+  "$comment": "Asignación de teclas por acción (GAME_DESIGN §12). Nombres según Phaser.Input.Keyboard.KeyCodes. El ataque básico usa el clic izquierdo (J queda reservada para Misiones).",
   "moveUp": ["W", "UP"],
   "moveDown": ["S", "DOWN"],
   "moveLeft": ["A", "LEFT"],
-  "moveRight": ["D", "RIGHT"]
+  "moveRight": ["D", "RIGHT"],
+  "power1": ["ONE"],
+  "power2": ["TWO"],
+  "power3": ["THREE"],
+  "final": ["R"],
+  "dodge": ["SPACE"]
 }

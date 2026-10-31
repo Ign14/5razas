@@ -1,10 +1,14 @@
-import type { MotionParams } from '../movement/characterMotion.ts';
 import { ID_PATTERN, Issues } from './validate.ts';
 
-/** Configuración del personaje provisional (Fase 1). Atributos completos llegan en Fase 2. */
-export interface CharacterConfig extends MotionParams {
+/**
+ * Configuración del personaje controlado. Los atributos (incluida la velocidad) provienen de la
+ * profesión elegida.
+ */
+export interface CharacterConfig {
   readonly id: string;
   readonly name: string;
+  readonly professionId: string;
+  readonly colliderHalfSize: number;
   /** Radio, en celdas, que el personaje revela en la niebla de exploración. */
   readonly visionRadius: number;
 }
@@ -15,7 +19,7 @@ export function parseCharacterConfig(raw: unknown, source: string): CharacterCon
   const cfg = {
     id: issues.string(r['id'], '$.id', { pattern: ID_PATTERN }),
     name: issues.string(r['name'], '$.name'),
-    moveSpeed: issues.number(r['moveSpeed'], '$.moveSpeed', { min: 0.1, max: 20 }),
+    professionId: issues.string(r['professionId'], '$.professionId', { pattern: ID_PATTERN }),
     colliderHalfSize: issues.number(r['colliderHalfSize'], '$.colliderHalfSize', { min: 0.05, max: 0.49 }),
     visionRadius: issues.number(r['visionRadius'], '$.visionRadius', { min: 1, max: 64 }),
   };

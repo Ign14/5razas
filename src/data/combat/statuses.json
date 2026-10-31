@@ -1,0 +1,9 @@
+{
+  "$comment": "Estados alterados iniciales (GAME_DESIGN §6.3). Valores de balance provisionales.",
+  "statuses": [
+    { "id": "burn", "name": "Quemadura", "kind": "damageOverTime", "duration": 3, "tickInterval": 0.5, "magnitude": 3, "harmful": true },
+    { "id": "poison", "name": "Envenenamiento", "kind": "damageOverTime", "duration": 6, "tickInterval": 1, "magnitude": 2, "harmful": true },
+    { "id": "slow", "name": "Ralentización", "kind": "speedMultiplier", "duration": 2.5, "magnitude": 0.55, "harmful": true },
+    { "id": "protection", "name": "Protección", "kind": "damageTakenMultiplier", "duration": 5, "magnitude": 0.5, "harmful": false }
+  ]
+}

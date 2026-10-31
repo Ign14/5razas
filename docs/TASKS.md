@@ -1,5 +1,23 @@
 # Tareas
 
+## Hecho — 2026-10-31 (Fase 2: combate)
+
+- [x] Atributos (§4.2) con modificadores y validación.
+- [x] Fórmula de daño determinista (físico/poder, defensa, crítico, evasión, protección).
+- [x] Habilidades por datos: Golpe del Guardián, Embestida, Corte Circular, Protección del Bosque, Tempestad Ancestral y Evasión.
+- [x] Hitboxes (arco, círculo, línea) contra hurtboxes; telegrafía de ataques enemigos.
+- [x] Estados: quemadura, envenenamiento, ralentización y protección; la resistencia acorta su duración.
+- [x] Invulnerabilidad tras impacto, retroceso, interrupciones por aplomo, recuperación escalada por Cadencia.
+- [x] Enemigos por datos (Brote Espinoso, Polilla Ceniza) y zonas de aparición en el mapa Tiled.
+- [x] IA: deambular, perseguir, atacar y regresar con correa; navegación A*; solo se actualizan las criaturas cercanas.
+- [x] Muerte, XP, reaparición de criaturas y del jugador.
+- [x] Controles: clic (básico, hacia el cursor), 1/2/3, R y Espacio; búfer de entrada.
+- [x] HUD: marco con vida/energía/XP, barra de 6 acciones con recarga y energía, avisos, pantalla de muerte.
+- [x] Efectos: áreas de impacto, números de daño (con pool), destellos, tintes por estado, barrera.
+- [x] Transparencia de los árboles que ocultan al jugador.
+- [x] Git inicializado; un commit por fase.
+- [x] Pruebas: 72 unitarias y 3 E2E.
+
 ## Hecho — 2026-10-30 (Fase 0 + base de Fase 1)
 
 - [x] Proyecto Vite 8 + TypeScript 6 estricto + Phaser 3.90.0.
@@ -18,10 +36,16 @@
 - [x] Minimapa isométrico con niebla de exploración, posición y orientación, nombre del sector y coordenadas.
 - [x] Documentación: ARCHITECTURE, ROADMAP, TASKS, DECISIONS, RESEARCH.
 
+## Pendiente — siguiente
+
+- [ ] **Fase 3 — Progresión**: tabla de XP por curva, niveles y crecimiento de atributos, `unlockLevel` real,
+      inventario, objetos, tablas de botín (las `lootTable` ya están referenciadas), equipamiento (2 sets) y bonificaciones.
+- [ ] Animaciones de ataque propias del personaje (hoy solo idle/caminar + efectos).
+- [ ] Separación entre criaturas (evitar que se superpongan).
+
 ## Pendiente — Fase 1
 
 - [ ] Decidir fuente de verdad del mapa: seguir con el generador o editar en Tiled (requiere exportar PNG de los placeholders a `public/placeholder/`).
-- [ ] Inicializar repositorio git (no realizado: requiere autorización).
 - [ ] Culling / chunks de objetos y prueba de rendimiento (escenario de referencia a 60 FPS).
 - [ ] Capas restantes de §3.2 (elevaciones, vegetación inferior, elementos superiores) cuando haya contenido que las use.
 - [ ] Minimapa ampliable (tecla M) — previsto en §3.4.

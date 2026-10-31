@@ -29,6 +29,18 @@ export const GENERATOR_TILES = {
   rock: 'rock',
 } as const;
 
+/**
+ * Zonas de aparición del sector inicial (en celdas). Deben quedar fuera del alcance de detección
+ * (aggro + deambulación) desde el punto de aparición del jugador; lo verifica una prueba.
+ */
+export const STARTING_SPAWN_ZONES = [
+  { id: 'brotes-cantera', creatureId: 'thorn-sprout', x: 14.5, y: 47.5, radius: 4, count: 3 },
+  { id: 'brotes-sendero-sur', creatureId: 'thorn-sprout', x: 34.5, y: 54.5, radius: 3, count: 2 },
+  { id: 'brotes-este', creatureId: 'thorn-sprout', x: 54.5, y: 36.5, radius: 3, count: 2 },
+  { id: 'polillas-lago', creatureId: 'ash-moth', x: 41.5, y: 14.5, radius: 3, count: 3 },
+  { id: 'polillas-noroeste', creatureId: 'ash-moth', x: 12.5, y: 14.5, radius: 4, count: 2 },
+] as const;
+
 export interface TiledMapJson {
   readonly [key: string]: unknown;
   readonly width: number;
@@ -134,7 +146,7 @@ export function generateStartingSector(opts: GeneratorOptions): TiledMapJson {
     tileheight: 32,
     tilewidth: 64,
     nextlayerid: 6,
-    nextobjectid: 2,
+    nextobjectid: 2 + STARTING_SPAWN_ZONES.length,
     properties: [
       { name: 'mapId', type: 'string', value: opts.mapId },
       { name: 'name', type: 'string', value: opts.name },
@@ -187,6 +199,23 @@ export function generateStartingSector(opts: GeneratorOptions): TiledMapJson {
             x: (spawn.x + 0.5) * 32,
             y: (spawn.y + 0.5) * 32,
           },
+          ...STARTING_SPAWN_ZONES.map((z, i) => ({
+            id: 2 + i,
+            name: z.id,
+            type: 'spawn-zone',
+            point: true,
+            rotation: 0,
+            visible: true,
+            width: 0,
+            height: 0,
+            x: z.x * 32,
+            y: z.y * 32,
+            properties: [
+              { name: 'count', type: 'int', value: z.count },
+              { name: 'creatureId', type: 'string', value: z.creatureId },
+              { name: 'radius', type: 'float', value: z.radius },
+            ],
+          })),
         ],
       },
     ],

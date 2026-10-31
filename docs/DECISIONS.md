@@ -34,3 +34,31 @@ serializa con `toArray()` para el futuro guardado.
 ## D-008 — Arte provisional procedural
 Texturas generadas por código (prefijo `ph-`), sin assets de terceros: cero riesgo de licencias. Se reemplazarán
 manteniendo claves y dimensiones.
+
+## D-009 — Combate simulado en el core, de forma determinista (2026-10-31)
+`CombatWorld` y `WorldSimulation` no usan Phaser ni `Math.random`: el tiempo y el RNG (mulberry32 con semilla) se
+inyectan. Así se prueban ciclos completos de combate (aparición → pelea → muerte → XP → reaparición) en Vitest.
+
+## D-010 — Velocidad del personaje desde el atributo Velocidad
+Se eliminó `moveSpeed` de `provisional-player.json`: la velocidad sale de `baseStats.speed` de la profesión
+(celdas/s), multiplicada por los estados (ralentización).
+
+## D-011 — A* propio en lugar de easystar.js
+Unas 80 líneas, síncrono, determinista, sin dependencias y con pruebas. `Navigator` va en línea recta si el camino
+está despejado y recalcula la ruta como máximo cada 0,6 s para limitar el coste con muchas criaturas.
+
+## D-012 — Búfer de entrada de 0,3 s
+Las pulsaciones nuevas (teclas o clic) durante una acción en curso se guardan y se ejecutan al quedar libre el
+personaje; la última reemplaza a la anterior. Mantener el clic presionado no se almacena. Lo detectaron las pruebas
+E2E: sin búfer, una habilidad pulsada justo después de otra se perdía, y un clic corto podía no registrarse.
+
+## D-013 — Aplomo (poise) en lugar de un booleano "interrumpible"
+Con el booleano, el ataque básico (que tiene retroceso) interrumpía siempre y el jugador nunca recibía daño. Ahora
+solo interrumpe un retroceso ≥ aplomo del objetivo (Brote Espinoso 0,6: solo Embestida y Corte Circular; Polilla 0,2).
+
+## D-014 — Transparencia de objetos que ocultan al jugador
+Los árboles situados delante del jugador se vuelven semitransparentes; dentro del bosque el personaje quedaba oculto
+durante el combate.
+
+## D-015 — Zonas de aparición fuera del alcance de detección del punto de inicio
+Una zona cercana provocaba muertes en bucle al reaparecer. Una prueba verifica la distancia mínima.

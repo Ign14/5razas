@@ -1,8 +1,8 @@
 {
-  "$comment": "Personaje PROVISIONAL de la Fase 1. Los atributos de combate se definirán en la Fase 2.",
+  "$comment": "Personaje PROVISIONAL. Atributos y habilidades provienen de la profesión.",
   "id": "provisional-player",
   "name": "Viajero",
-  "moveSpeed": 4.5,
+  "professionId": "guardian-del-bosque",
   "colliderHalfSize": 0.3,
   "visionRadius": 7
 }

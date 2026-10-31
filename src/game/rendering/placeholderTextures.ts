@@ -177,3 +177,85 @@ export function createPlayerAnimations(scene: Phaser.Scene): void {
     }
   });
 }
+
+export const CREATURE_FRAME = 40;
+/** Origen en la base de la criatura. */
+export const CREATURE_ORIGIN_Y = 36 / CREATURE_FRAME;
+
+type CreaturePainter = (ctx: CanvasRenderingContext2D, ox: number, frame: number) => void;
+
+function shadow(ctx: CanvasRenderingContext2D, ox: number, rx: number) {
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(ox + 20, 36, rx, rx * 0.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function blob(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, color: string, seed: number) {
+  for (let y = -r; y <= r; y++) {
+    for (let x = -r; x <= r; x++) {
+      if (x * x + y * y > r * r) continue;
+      const n = hash2(cx + x, cy + y, seed);
+      ctx.fillStyle = hex(color, (y < -r / 3 ? 18 : y > r / 3 ? -16 : 0) + (n < 0.12 ? -12 : 0));
+      ctx.fillRect(cx + x, cy + y, 1, 1);
+    }
+  }
+}
+
+/** Pintores provisionales por clave de spriteAtlas. */
+const CREATURE_PAINTERS: Readonly<Record<string, CreaturePainter>> = {
+  'ph-creature-thorn-sprout': (ctx, ox, frame) => {
+    const bob = frame;
+    shadow(ctx, ox, 11);
+    blob(ctx, ox + 20, 26 - bob, 10, '#4c7a2e', 3);
+    ctx.fillStyle = '#d9c27a';
+    for (const [x, y] of [[9, 22], [31, 22], [14, 15], [26, 15], [20, 12]] as const) {
+      ctx.fillRect(ox + x, y - bob, 2, 2);
+    }
+    ctx.fillStyle = '#e8483a';
+    ctx.fillRect(ox + 16, 25 - bob, 2, 2);
+    ctx.fillRect(ox + 22, 25 - bob, 2, 2);
+  },
+  'ph-creature-ash-moth': (ctx, ox, frame) => {
+    const flap = frame === 0 ? 0 : 3;
+    shadow(ctx, ox, 7);
+    ctx.fillStyle = '#9b958c';
+    for (let y = 0; y < 10 - flap; y++) {
+      const w = 9 - Math.abs(y - 4);
+      ctx.fillRect(ox + 20 - 3 - w, 12 + y + flap, w, 1);
+      ctx.fillRect(ox + 20 + 3, 12 + y + flap, w, 1);
+    }
+    blob(ctx, ox + 20, 18, 3, '#5d5650', 9);
+    ctx.fillStyle = '#ffb347';
+    ctx.fillRect(ox + 18, 15, 1, 1);
+    ctx.fillRect(ox + 21, 15, 1, 1);
+  },
+};
+
+function fallbackPainter(ctx: CanvasRenderingContext2D, ox: number, frame: number) {
+  shadow(ctx, ox, 10);
+  blob(ctx, ox + 20, 26 - frame, 9, '#a04080', 1);
+}
+
+/** Genera una textura de 2 fotogramas para cada atlas de criatura solicitado. */
+export function createCreatureTextures(scene: Phaser.Scene, atlasKeys: Iterable<string>): void {
+  for (const key of atlasKeys) {
+    if (scene.textures.exists(key)) continue;
+    const canvas = scene.textures.createCanvas(key, CREATURE_FRAME * 2, CREATURE_FRAME);
+    if (!canvas) throw new Error(`No se pudo crear la textura ${key}`);
+    const paint = CREATURE_PAINTERS[key] ?? fallbackPainter;
+    for (let f = 0; f < 2; f++) {
+      paint(canvas.context, f * CREATURE_FRAME, f);
+      canvas.add(f, 0, f * CREATURE_FRAME, 0, CREATURE_FRAME, CREATURE_FRAME);
+    }
+    canvas.refresh();
+    if (!scene.anims.exists(`${key}-idle`)) {
+      scene.anims.create({
+        key: `${key}-idle`,
+        frames: [0, 1].map((frame) => ({ key, frame })),
+        frameRate: key.includes('moth') ? 10 : 3,
+        repeat: -1,
+      });
+    }
+  }
+}

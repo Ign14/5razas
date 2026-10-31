@@ -1,0 +1,29 @@
+{
+  "$comment": "Profesión inicial del MVP (GAME_DESIGN §5). Clase de fantasía original; nombre y balance provisionales. speed en celdas/s; crit y evasion son probabilidades.",
+  "id": "guardian-del-bosque",
+  "name": "Guardián del Bosque",
+  "description": "Combatiente cuerpo a cuerpo con buen equilibrio de defensa y movilidad.",
+  "baseStats": {
+    "life": 120,
+    "energy": 100,
+    "attack": 14,
+    "power": 12,
+    "defense": 10,
+    "resistance": 8,
+    "speed": 4.5,
+    "attackRate": 1,
+    "crit": 0.1,
+    "evasion": 0.05
+  },
+  "energyRegen": 7,
+  "invulnerabilityOnHit": 0.6,
+  "hurtboxRadius": 0.35,
+  "abilities": {
+    "basic": "guardian-strike",
+    "power1": "guardian-charge",
+    "power2": "guardian-whirl",
+    "power3": "guardian-ward",
+    "final": "guardian-tempest",
+    "dodge": "guardian-dodge"
+  }
+}

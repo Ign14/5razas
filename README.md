@@ -21,7 +21,16 @@ Node ≥ 22.12.
 
 ## Controles
 
-WASD o flechas: moverse. ENTER o clic: comenzar.
+| Acción | Control |
+|---|---|
+| Moverse | WASD o flechas |
+| Ataque básico (hacia el cursor) | Clic izquierdo |
+| Poderes 1, 2 y 3 | Teclas 1, 2, 3 |
+| Habilidad final | R |
+| Evasión | Espacio |
+| Comenzar partida | ENTER o clic |
+
+Las teclas se configuran en `src/data/controls.json`.
 
 Documentación: `docs/GAME_DESIGN.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/TASKS.md`, `docs/DECISIONS.md`.
 

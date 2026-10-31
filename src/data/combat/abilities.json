@@ -1,0 +1,78 @@
+{
+  "$comment": "Habilidades (GAME_DESIGN §6.1-6.2). Nombres y efectos provisionales y completamente ficticios. Distancias en celdas, tiempos en segundos. unlockLevel = 1 hasta que la Fase 3 defina la curva de desbloqueo.",
+  "abilities": [
+    {
+      "id": "guardian-strike", "name": "Golpe del Guardián",
+      "description": "Ataque físico de corta distancia en arco frente al personaje.",
+      "category": "basic", "damageType": "physical", "multiplier": 1.0, "range": 0,
+      "area": { "shape": "arc", "radius": 1.5, "angleDeg": 120 },
+      "energyCost": 0, "cooldown": 0.45, "windup": 0.08, "hits": 1, "hitInterval": 0, "knockback": 0.3,
+      "dash": null, "applyStatus": null,
+      "animation": "attack", "vfx": "slash", "unlockLevel": 1, "compatibleModifiers": ["element"]
+    },
+    {
+      "id": "guardian-charge", "name": "Embestida",
+      "description": "Desplazamiento ofensivo de corta distancia que impacta a los enemigos en el recorrido.",
+      "category": "skill", "damageType": "physical", "multiplier": 1.6, "range": 0,
+      "area": { "shape": "line", "length": 0.6, "width": 1.1 },
+      "energyCost": 20, "cooldown": 5, "windup": 0, "hits": 1, "hitInterval": 0, "knockback": 1.0,
+      "dash": { "distance": 3.2, "duration": 0.2, "invulnerable": false }, "applyStatus": null,
+      "animation": "dash", "vfx": "charge", "unlockLevel": 1, "compatibleModifiers": ["element"]
+    },
+    {
+      "id": "guardian-whirl", "name": "Corte Circular",
+      "description": "Ataque de área alrededor del personaje.",
+      "category": "skill", "damageType": "physical", "multiplier": 1.3, "range": 0,
+      "area": { "shape": "circle", "radius": 2.0 },
+      "energyCost": 25, "cooldown": 6, "windup": 0.12, "hits": 1, "hitInterval": 0, "knockback": 0.7,
+      "dash": null, "applyStatus": null,
+      "animation": "spin", "vfx": "whirl", "unlockLevel": 1, "compatibleModifiers": ["element"]
+    },
+    {
+      "id": "guardian-ward", "name": "Protección del Bosque",
+      "description": "Genera una barrera temporal que reduce a la mitad el daño recibido.",
+      "category": "skill", "damageType": "power", "multiplier": 0, "range": 0,
+      "area": { "shape": "none" },
+      "energyCost": 30, "cooldown": 14, "windup": 0.1, "hits": 0, "hitInterval": 0, "knockback": 0,
+      "dash": null, "applyStatus": { "statusId": "protection", "target": "self", "chance": 1 },
+      "animation": "cast", "vfx": "barrier", "unlockLevel": 1, "compatibleModifiers": []
+    },
+    {
+      "id": "guardian-tempest", "name": "Tempestad Ancestral",
+      "description": "Ataque poderoso de área que genera múltiples impactos alrededor del personaje.",
+      "category": "final", "damageType": "power", "multiplier": 0.9, "range": 0,
+      "area": { "shape": "circle", "radius": 3.2 },
+      "energyCost": 60, "cooldown": 30, "windup": 0.35, "hits": 5, "hitInterval": 0.25, "knockback": 0.25,
+      "dash": null, "applyStatus": null,
+      "animation": "cast", "vfx": "tempest", "unlockLevel": 1, "compatibleModifiers": ["element"]
+    },
+    {
+      "id": "guardian-dodge", "name": "Evasión",
+      "description": "Desplazamiento rápido e invulnerable en la dirección de movimiento.",
+      "category": "movement", "damageType": "physical", "multiplier": 0, "range": 0,
+      "area": { "shape": "none" },
+      "energyCost": 10, "cooldown": 1.2, "windup": 0, "hits": 0, "hitInterval": 0, "knockback": 0,
+      "dash": { "distance": 2.6, "duration": 0.22, "invulnerable": true }, "applyStatus": null,
+      "animation": "dash", "vfx": "dodge", "unlockLevel": 1, "compatibleModifiers": []
+    },
+    {
+      "id": "thorn-lash", "name": "Latigazo de espinas",
+      "description": "Golpe telegrafiado en arco que puede ralentizar.",
+      "category": "skill", "damageType": "physical", "multiplier": 1.0, "range": 0,
+      "area": { "shape": "arc", "radius": 1.5, "angleDeg": 100 },
+      "energyCost": 0, "cooldown": 1.8, "windup": 0.5, "hits": 1, "hitInterval": 0, "knockback": 0.35,
+      "dash": null, "applyStatus": { "statusId": "slow", "target": "hit", "chance": 0.4 },
+      "animation": "attack", "vfx": "enemy-slash", "unlockLevel": 1, "compatibleModifiers": []
+    },
+    {
+      "id": "ash-dive", "name": "Picada de ceniza",
+      "description": "Lanzamiento corto contra el objetivo que puede causar quemadura.",
+      "category": "skill", "damageType": "physical", "multiplier": 1.0, "range": 0,
+      "area": { "shape": "line", "length": 0.5, "width": 0.9 },
+      "energyCost": 0, "cooldown": 1.6, "windup": 0.35, "hits": 1, "hitInterval": 0, "knockback": 0.2,
+      "dash": { "distance": 2.0, "duration": 0.18, "invulnerable": false },
+      "applyStatus": { "statusId": "burn", "target": "hit", "chance": 0.35 },
+      "animation": "dash", "vfx": "enemy-dive", "unlockLevel": 1, "compatibleModifiers": []
+    }
+  ]
+}

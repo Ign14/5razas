@@ -118,11 +118,11 @@ describe('mapa inicial (Tiled JSON)', () => {
 describe('configuración del personaje', () => {
   it('carga el personaje provisional', () => {
     const cfg = parseCharacterConfig(playerJson, 'player');
-    expect(cfg.moveSpeed).toBeGreaterThan(0);
+    expect(cfg.professionId).toBe('guardian-del-bosque');
     expect(cfg.colliderHalfSize).toBeLessThan(0.5);
   });
 
   it('rechaza valores fuera de rango', () => {
-    expect(() => parseCharacterConfig({ ...playerJson, moveSpeed: -1 }, 'p')).toThrow(/moveSpeed/);
+    expect(() => parseCharacterConfig({ ...playerJson, colliderHalfSize: 2 }, 'p')).toThrow(/colliderHalfSize/);
   });
 });

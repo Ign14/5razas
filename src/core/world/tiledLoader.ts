@@ -1,7 +1,7 @@
 import { ID_PATTERN, Issues, isRecord } from '../data/validate.ts';
 import type { Vec2 } from '../math/vector.ts';
 import { MAP_LAYERS, type MapLayerId, type TileCatalog } from './tileCatalog.ts';
-import { WorldMap } from './worldMap.ts';
+import { WorldMap, type SpawnZone } from './worldMap.ts';
 
 /**
  * Cargador de mapas en formato JSON de Tiled (https://doc.mapeditor.org/en/stable/reference/json-map-format/).
@@ -10,7 +10,8 @@ import { WorldMap } from './worldMap.ts';
  * - orientation "isometric", mapas finitos, capas sin compresión (arreglo `data`).
  * - Tilesets embebidos; cada tile declara la propiedad string `tileId` que referencia el catálogo.
  * - Capas de tiles nombradas como las capas lógicas (ground, detail, paths, objects).
- * - Grupo de objetos "markers" con un objeto de tipo "spawn".
+ * - Grupo de objetos "markers" con un objeto de tipo "spawn" y, opcionalmente, objetos "spawn-zone"
+ *   con propiedades creatureId (string), count (int) y radius (float, en celdas).
  */
 
 /** Bits de volteo que Tiled codifica en los GID. */
@@ -21,12 +22,17 @@ export interface ExpectedMapShape {
   readonly tileHeight: number;
 }
 
-function stringProperty(props: unknown, name: string): string | undefined {
+function property(props: unknown, name: string): unknown {
   if (!Array.isArray(props)) return undefined;
   for (const p of props) {
-    if (isRecord(p) && p['name'] === name && typeof p['value'] === 'string') return p['value'];
+    if (isRecord(p) && p['name'] === name) return p['value'];
   }
   return undefined;
+}
+
+function stringProperty(props: unknown, name: string): string | undefined {
+  const v = property(props, name);
+  return typeof v === 'string' ? v : undefined;
 }
 
 export function parseTiledMap(
@@ -79,6 +85,7 @@ export function parseTiledMap(
 
   const layers: Partial<Record<MapLayerId, (string | null)[]>> = {};
   let spawn: Vec2 | undefined;
+  const spawnZones: SpawnZone[] = [];
 
   issues.array(map['layers'], '$.layers')?.forEach((l, i) => {
     const p = `$.layers[${i}]`;
@@ -124,11 +131,27 @@ export function parseTiledMap(
         if (!obj) return;
         // Tiled ≥1.9 usa "class" en algunas versiones y "type" en otras.
         const kind = obj['type'] ?? obj['class'];
-        if (kind !== 'spawn' || tileHeight === undefined) return;
+        if ((kind !== 'spawn' && kind !== 'spawn-zone') || tileHeight === undefined) return;
         const ox = issues.number(obj['x'], `${op}.x`);
         const oy = issues.number(obj['y'], `${op}.y`);
+        if (ox === undefined || oy === undefined) return;
         // En mapas isométricos Tiled expresa ambas coordenadas en unidades de tileheight.
-        if (ox !== undefined && oy !== undefined) spawn = { x: ox / tileHeight, y: oy / tileHeight };
+        const position = { x: ox / tileHeight, y: oy / tileHeight };
+        if (kind === 'spawn') {
+          spawn = position;
+          return;
+        }
+        const props = obj['properties'];
+        const zone = {
+          id: issues.string(obj['name'], `${op}.name`, { pattern: ID_PATTERN }),
+          creatureId: issues.string(property(props, 'creatureId'), `${op}.properties.creatureId`, { pattern: ID_PATTERN }),
+          count: issues.number(property(props, 'count'), `${op}.properties.count`, { integer: true, min: 1, max: 50 }),
+          radius: issues.number(property(props, 'radius'), `${op}.properties.radius`, { min: 0.5, max: 32 }),
+        };
+        if (zone.id && spawnZones.some((z) => z.id === zone.id)) issues.add(`${op}.name`, `zona duplicada "${zone.id}"`);
+        if (zone.id && zone.creatureId && zone.count !== undefined && zone.radius !== undefined) {
+          spawnZones.push({ id: zone.id, creatureId: zone.creatureId, count: zone.count, radius: zone.radius, center: position });
+        }
       });
     }
   });
@@ -149,6 +172,7 @@ export function parseTiledMap(
     iso: { tileWidth: tileWidth as number, tileHeight: tileHeight as number },
     layers: layers as Record<MapLayerId, (string | null)[]>,
     spawn: spawn as Vec2,
+    spawnZones,
     catalog,
   });
   const s = spawn as Vec2;
