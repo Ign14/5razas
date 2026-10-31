@@ -1,0 +1,13 @@
+{
+  "$comment": "Catálogo de tiles del MVP. Colores y formas son PLACEHOLDERS provisionales hasta contar con pixel art definitivo.",
+  "tiles": [
+    { "id": "grass", "name": "Pasto", "layer": "ground", "walkable": true, "shape": "flat", "color": "#4f8a3c", "minimapColor": "#4f8a3c" },
+    { "id": "sand", "name": "Arena", "layer": "ground", "walkable": true, "shape": "flat", "color": "#c9b77a", "minimapColor": "#c9b77a" },
+    { "id": "water", "name": "Agua", "layer": "ground", "walkable": false, "shape": "water", "color": "#2f6f9f", "minimapColor": "#2f6f9f" },
+    { "id": "stone-floor", "name": "Suelo pedregoso", "layer": "ground", "walkable": true, "shape": "flat", "color": "#7d7a70", "minimapColor": "#8a877d" },
+    { "id": "grass-dark", "name": "Pasto denso", "layer": "detail", "walkable": true, "shape": "flat", "color": "#3e7431", "minimapColor": "#43793a" },
+    { "id": "dirt-path", "name": "Sendero de tierra", "layer": "paths", "walkable": true, "shape": "flat", "color": "#9a7346", "minimapColor": "#d2a46a" },
+    { "id": "tree", "name": "Árbol", "layer": "objects", "walkable": false, "shape": "tree", "color": "#2c5e2a", "minimapColor": "#1f4420" },
+    { "id": "rock", "name": "Roca", "layer": "objects", "walkable": false, "shape": "rock", "color": "#8f8c86", "minimapColor": "#5e5c58" }
+  ]
+}

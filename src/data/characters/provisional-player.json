@@ -1,0 +1,8 @@
+{
+  "$comment": "Personaje PROVISIONAL de la Fase 1. Los atributos de combate se definirán en la Fase 2.",
+  "id": "provisional-player",
+  "name": "Viajero",
+  "moveSpeed": 4.5,
+  "colliderHalfSize": 0.3,
+  "visionRadius": 7
+}

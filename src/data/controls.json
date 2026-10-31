@@ -1,0 +1,7 @@
+{
+  "$comment": "Asignación de teclas por acción. Nombres de tecla según Phaser.Input.Keyboard.KeyCodes.",
+  "moveUp": ["W", "UP"],
+  "moveDown": ["S", "DOWN"],
+  "moveLeft": ["A", "LEFT"],
+  "moveRight": ["D", "RIGHT"]
+}
