@@ -1,5 +1,5 @@
 {
-  "$comment": "Bestiario (GAME_DESIGN §8-9). Enemigos comunes ficticios y fauna REAL del bioma (sin atribuciones culturales; comportamientos simplificados para el juego). El nivel se elige al aparecer dentro de levelRange; statsPerLevel escala sus atributos. poise: retroceso mínimo que interrumpe su ataque. habitat: tiles donde aparece. activeHours: horario de aparición.",
+  "$comment": "Bestiario (GAME_DESIGN §8-9). El jefe del MVP es una criatura original de fantasía. Enemigos comunes ficticios y fauna REAL del bioma (sin atribuciones culturales; comportamientos simplificados para el juego). El nivel se elige al aparecer dentro de levelRange; statsPerLevel escala sus atributos. poise: retroceso mínimo que interrumpe su ataque. habitat: tiles donde aparece. activeHours: horario de aparición.",
   "creatures": [
     {
       "id": "thorn-sprout",
@@ -295,6 +295,104 @@
       "spawnRules": {
         "respawnSeconds": 60,
         "activeHours": null
+      }
+    },
+    {
+      "id": "centinela-de-las-raices",
+      "name": "Centinela de las Raíces",
+      "category": "boss",
+      "biome": "temperate-forest",
+      "levelRange": [
+        8,
+        8
+      ],
+      "stats": {
+        "life": 900,
+        "energy": 0,
+        "attack": 20,
+        "power": 18,
+        "defense": 14,
+        "resistance": 10,
+        "speed": 2.4,
+        "attackRate": 1,
+        "crit": 0.05,
+        "evasion": 0
+      },
+      "statsPerLevel": {},
+      "behavior": {
+        "type": "aggressive",
+        "aggroRadius": 7,
+        "leashRadius": 11,
+        "attackRange": 2.0,
+        "wanderRadius": 1
+      },
+      "abilities": [
+        "raiz-golpe",
+        "raiz-embestida",
+        "raiz-onda",
+        "raiz-tempestad"
+      ],
+      "lootTable": "centinela",
+      "xpReward": 80,
+      "spriteAtlas": "ph-creature-centinela",
+      "hurtboxRadius": 0.8,
+      "colliderHalfSize": 0.45,
+      "poise": 99,
+      "habitat": [],
+      "spawnRules": {
+        "respawnSeconds": 0,
+        "activeHours": null
+      },
+      "boss": {
+        "transitionSeconds": 1.5,
+        "phases": [
+          {
+            "name": "Despertar",
+            "hpBelow": 1,
+            "abilities": [
+              "raiz-golpe",
+              "raiz-embestida"
+            ],
+            "speedMultiplier": 1,
+            "cooldownMultiplier": 1,
+            "obstacles": null
+          },
+          {
+            "name": "Raíces del claro",
+            "hpBelow": 0.66,
+            "abilities": [
+              "raiz-onda",
+              "raiz-golpe",
+              "raiz-embestida"
+            ],
+            "speedMultiplier": 1,
+            "cooldownMultiplier": 1,
+            "obstacles": {
+              "count": 4,
+              "radius": 3.5,
+              "duration": 6,
+              "every": 9
+            }
+          },
+          {
+            "name": "Furia del bosque",
+            "hpBelow": 0.33,
+            "abilities": [
+              "raiz-tempestad",
+              "raiz-embestida",
+              "raiz-golpe",
+              "raiz-onda"
+            ],
+            "speedMultiplier": 1.4,
+            "cooldownMultiplier": 0.7,
+            "obstacles": {
+              "count": 3,
+              "radius": 3,
+              "duration": 5,
+              "every": 12
+            }
+          }
+        ]
       }
     }
   ]

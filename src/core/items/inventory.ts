@@ -86,6 +86,14 @@ export class Inventory {
     this.slots[b] = tmp;
   }
 
+  /** Restaura las ranuras desde un guardado (los objetos desconocidos se descartan). */
+  restore(slots: readonly (ItemStack | null)[]): void {
+    for (let i = 0; i < this.capacity; i++) {
+      const s = slots[i] ?? null;
+      this.slots[i] = s && this.catalog.all.has(s.itemId) ? { itemId: s.itemId, quantity: Math.min(s.quantity, this.catalog.get(s.itemId).maxStack) } : null;
+    }
+  }
+
   /** Serialización para el guardado (Fase 6). */
   toJSON(): (ItemStack | null)[] {
     return this.slots.map((s) => (s ? { ...s } : null));

@@ -1,0 +1,115 @@
+{
+  "$comment": "PROVISIONAL — ficción original del vertical slice, sin referencias a pueblos, ceremonias ni entidades reales. Pendiente de revisión humana antes de vincularla a un territorio cultural (CLAUDE.md, GAME_DESIGN §2).",
+  "quests": [
+    {
+      "id": "senales-en-el-bosque",
+      "name": "Señales en el bosque",
+      "giver": "vigia-del-sendero",
+      "prerequisites": [],
+      "description": "Los Brotes Espinosos se extienden por los claros. Comprueba si puedes contenerlos.",
+      "objectives": [
+        {
+          "id": "brotes",
+          "type": "defeat",
+          "target": "thorn-sprout",
+          "count": 3,
+          "description": "Derrota Brotes Espinosos"
+        }
+      ],
+      "rewards": {
+        "xp": 60,
+        "items": [
+          {
+            "itemId": "tonico-vital",
+            "quantity": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "saber-de-las-plantas",
+      "name": "Saber de las plantas",
+      "giver": "vigia-del-sendero",
+      "prerequisites": [
+        "senales-en-el-bosque"
+      ],
+      "description": "Las plantas del bosque guardan propiedades que pueden combinarse. Recolecta Hojas Carmesí.",
+      "objectives": [
+        {
+          "id": "hojas",
+          "type": "gather",
+          "target": "hoja-carmesi",
+          "count": 3,
+          "description": "Recolecta Hojas Carmesí"
+        }
+      ],
+      "rewards": {
+        "xp": 40,
+        "items": [
+          {
+            "itemId": "raiz-solar",
+            "quantity": 1
+          },
+          {
+            "itemId": "tonico-energia",
+            "quantity": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "el-primer-elixir",
+      "name": "El primer elixir",
+      "giver": "vigia-del-sendero",
+      "prerequisites": [
+        "saber-de-las-plantas"
+      ],
+      "description": "Experimenta en el mortero (K) hasta descubrir una receta.",
+      "objectives": [
+        {
+          "id": "receta",
+          "type": "discover",
+          "target": null,
+          "count": 1,
+          "description": "Descubre una receta de alquimia"
+        }
+      ],
+      "rewards": {
+        "xp": 80,
+        "items": [
+          {
+            "itemId": "yelmo-de-corteza",
+            "quantity": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "el-centinela",
+      "name": "Lo que acecha en el claro",
+      "giver": "vigia-del-sendero",
+      "prerequisites": [
+        "el-primer-elixir"
+      ],
+      "description": "Un Centinela de las Raíces despertó en el claro del sureste. Detenlo.",
+      "objectives": [
+        {
+          "id": "centinela",
+          "type": "defeat",
+          "target": "centinela-de-las-raices",
+          "count": 1,
+          "description": "Derrota al Centinela de las Raíces"
+        }
+      ],
+      "rewards": {
+        "xp": 300,
+        "items": [
+          {
+            "itemId": "tonico-vital",
+            "quantity": 3
+          }
+        ]
+      }
+    }
+  ]
+}

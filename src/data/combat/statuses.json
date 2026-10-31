@@ -59,6 +59,14 @@
       "tickInterval": 1,
       "magnitude": 4,
       "harmful": false
+    },
+    {
+      "id": "vulnerable",
+      "name": "Vulnerable",
+      "kind": "damageTakenMultiplier",
+      "duration": 4.5,
+      "magnitude": 1.6,
+      "harmful": false
     }
   ]
 }

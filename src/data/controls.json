@@ -13,5 +13,7 @@
   "quick2": ["F"],
   "inventory": ["I"],
   "interact": ["E"],
-  "alchemy": ["K"]
+  "alchemy": ["K"],
+  "journal": ["J"],
+  "menu": ["ESC"]
 }

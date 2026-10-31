@@ -33,6 +33,11 @@ export class Issues {
     return this.list.length;
   }
 
+  /** Problemas acumulados, sin lanzar excepción. */
+  messages(): readonly string[] {
+    return this.list;
+  }
+
   throwIfAny(source: string): void {
     if (this.list.length > 0) throw new DataValidationError(source, this.list);
   }

@@ -9,8 +9,8 @@ import type { PlayerCommand } from '../../core/simulation/worldSimulation.ts';
 const MOVE_ACTIONS = ['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const;
 /** Acciones activadas por teclado; el ataque básico se activa con el clic izquierdo. */
 const KEY_ACTIONS = ['power1', 'power2', 'power3', 'final', 'dodge'] as const satisfies readonly ActionSlot[];
-/** Ranuras rápidas de consumibles (Q, F), inventario (I), interacción (E) y alquimia (K). */
-const OTHER_ACTIONS = ['quick1', 'quick2', 'inventory', 'interact', 'alchemy'] as const;
+/** Consumibles (Q, F), inventario (I), interacción (E), alquimia (K), diario (J) y menú (Esc). */
+const OTHER_ACTIONS = ['quick1', 'quick2', 'inventory', 'interact', 'alchemy', 'journal', 'menu'] as const;
 type BindingName = (typeof MOVE_ACTIONS)[number] | (typeof KEY_ACTIONS)[number] | (typeof OTHER_ACTIONS)[number];
 export type Bindings = Readonly<Record<BindingName, readonly string[]>>;
 
@@ -92,13 +92,9 @@ export class PlayerInput {
     return { move, aim, action, pressed, quickSlot, interact: this.justDown('interact') };
   }
 
-  /** true una vez por pulsación de la tecla de inventario. */
-  inventoryPressed(): boolean {
-    return this.justDown('inventory');
-  }
-
-  /** true una vez por pulsación de la tecla de alquimia. */
-  alchemyPressed(): boolean {
-    return this.justDown('alchemy');
+  /** Pantalla superpuesta solicitada en este fotograma (una pulsación por tecla). */
+  overlayPressed(): 'inventory' | 'alchemy' | 'journal' | 'menu' | null {
+    for (const k of ['menu', 'inventory', 'alchemy', 'journal'] as const) if (this.justDown(k)) return k;
+    return null;
   }
 }

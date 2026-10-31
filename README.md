@@ -31,11 +31,17 @@ Node ≥ 22.12.
 | Consumibles rápidos | Q, F |
 | Inventario y equipo | I (Esc para cerrar) |
 | Recolectar | E |
-| Alquimia | K (Esc para cerrar) |
+| Alquimia | K |
+| Diario de misiones | J |
+| Hablar con un PNJ | E |
+| Menú de pausa / guardar / cerrar pantallas | Esc |
+
+La partida se guarda en el navegador (IndexedDB): automáticamente cada minuto y en hitos, o manualmente desde el
+menú de pausa. El menú principal permite continuarla.
 | Comenzar partida | ENTER o clic |
 
 Las teclas se configuran en `src/data/controls.json`.
 
 Documentación: `docs/GAME_DESIGN.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/TASKS.md`, `docs/DECISIONS.md`.
 
-El arte actual es **provisional** y generado por código.
+El arte actual es **provisional** y generado por código. La narrativa es ficción provisional pendiente de revisión.

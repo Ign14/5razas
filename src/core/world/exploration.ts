@@ -49,7 +49,17 @@ export class ExplorationState {
     return revealed;
   }
 
-  /** Serialización compacta para el futuro sistema de guardado. */
+  /** Restaura las celdas exploradas desde un guardado. */
+  restore(bits: readonly number[]): void {
+    if (bits.length !== this.explored.length) throw new Error('Tamaño de exploración incompatible');
+    this.revealedCount = 0;
+    bits.forEach((b, i) => {
+      this.explored[i] = b ? 1 : 0;
+      if (b) this.revealedCount++;
+    });
+  }
+
+  /** Serialización compacta para el sistema de guardado. */
   toArray(): number[] {
     return Array.from(this.explored);
   }

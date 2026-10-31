@@ -24,6 +24,13 @@ export interface GatherZone {
   readonly count: number;
 }
 
+/** Personaje no jugador ubicado en el mapa (objeto Tiled de tipo "npc"). */
+export interface NpcPlacement {
+  readonly id: string;
+  readonly npcId: string;
+  readonly position: Vec2;
+}
+
 /** Sector del mundo ya validado, independiente del formato de origen y de Phaser. */
 export class WorldMap implements CollisionMap {
   readonly id: string;
@@ -35,6 +42,7 @@ export class WorldMap implements CollisionMap {
   readonly spawn: Vec2;
   readonly spawnZones: readonly SpawnZone[];
   readonly gatherZones: readonly GatherZone[];
+  readonly npcs: readonly NpcPlacement[];
   readonly catalog: TileCatalog;
   private readonly blocked: Uint8Array;
 
@@ -48,6 +56,7 @@ export class WorldMap implements CollisionMap {
     spawn: Vec2;
     spawnZones?: readonly SpawnZone[];
     gatherZones?: readonly GatherZone[];
+    npcs?: readonly NpcPlacement[];
     catalog: TileCatalog;
   }) {
     const { width, height, layers, catalog } = init;
@@ -60,6 +69,7 @@ export class WorldMap implements CollisionMap {
     this.spawn = init.spawn;
     this.spawnZones = init.spawnZones ?? [];
     this.gatherZones = init.gatherZones ?? [];
+    this.npcs = init.npcs ?? [];
     this.catalog = catalog;
     this.blocked = new Uint8Array(width * height);
     for (const layer of Object.values(layers)) {

@@ -16,6 +16,7 @@ export class CreatureView {
   private readonly scene: Phaser.Scene;
   private hurtFlashUntil = 0;
   private telegraphUntil = 0;
+  private readonly isBoss: boolean;
 
   constructor(scene: Phaser.Scene, creature: CreatureInstance, iso: IsoMetrics) {
     this.scene = scene;
@@ -23,6 +24,9 @@ export class CreatureView {
     const key = creature.def.spriteAtlas;
     this.sprite = scene.add.sprite(0, 0, key, 0).setOrigin(0.5, CREATURE_ORIGIN_Y);
     this.sprite.play(`${key}-idle`);
+    // Los jefes se dibujan al doble de tamaño; su vida se muestra en el HUD.
+    this.isBoss = creature.def.category === 'boss';
+    if (this.isBoss) this.sprite.setScale(2);
     this.sprite.setAlpha(0);
     scene.tweens.add({ targets: this.sprite, alpha: 1, duration: 400 });
     this.bar = new HealthBar(scene);
@@ -51,7 +55,7 @@ export class CreatureView {
     // Las texturas provisionales miran a la derecha: se espejan según la orientación.
     this.sprite.setFlipX(c.motion.facing.includes('w'));
     applyCombatVisuals(this.sprite, c.combatant, time, this.hurtFlashUntil, this.telegraphUntil);
-    this.bar.draw(p.x, p.y - 38, c.combatant.hp / c.combatant.stats.life, depth + 0.2);
+    if (!this.isBoss) this.bar.draw(p.x, p.y - 38, c.combatant.hp / c.combatant.stats.life, depth + 0.2);
     // Estado de alerta de la fauna (GAME_DESIGN §8).
     const alert = c.brain.state === 'alert' || c.brain.state === 'flee';
     this.alertMark.setVisible(alert).setPosition(p.x, p.y - 40).setDepth(depth + 0.3);
@@ -73,8 +77,8 @@ export class CreatureView {
     this.scene.tweens.add({
       targets: this.sprite,
       alpha: 0,
-      scaleX: 1.4,
-      scaleY: 0.2,
+      scaleX: this.sprite.scaleX * 1.4,
+      scaleY: this.sprite.scaleY * 0.2,
       duration: 350,
       onComplete: () => { this.sprite.destroy(); },
     });

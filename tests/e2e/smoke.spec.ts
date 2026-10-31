@@ -162,3 +162,55 @@ test('alquimia: se abre con K, pausa el juego, cambia con I y se cierra con Esc'
   expect(await page.evaluate(() => window.__5RAZAS__?.discoveries())).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test('narrativa: hablar con el Vigía (E), aceptar una misión con 1 y verla en el diario (J)', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__5RAZAS__ !== undefined);
+  // El Vigía está a la derecha (pantalla) del punto de inicio.
+  await page.keyboard.down('d');
+  await page.waitForFunction(() => {
+    const p = window.__5RAZAS__?.player();
+    return p !== undefined && Math.hypot(p.x - 34.5, p.y - 30.5) < 1.2;
+  });
+  await page.keyboard.up('d');
+  await page.keyboard.press('e');
+  await expect.poll(() => page.evaluate(() => window.__5RAZAS__?.paused())).toBe(true);
+  await page.screenshot({ path: 'test-results/14-dialogue.png' });
+  await page.keyboard.press('1');
+  await expect.poll(() => page.evaluate(() => window.__5RAZAS__?.quests()['senales-en-el-bosque']?.state)).toBe('active');
+  await page.keyboard.press('1'); // "Adiós."
+  await expect.poll(() => page.evaluate(() => window.__5RAZAS__?.paused())).toBe(false);
+  await page.keyboard.press('j');
+  await expect.poll(() => page.evaluate(() => window.__5RAZAS__?.paused())).toBe(true);
+  await page.screenshot({ path: 'test-results/15-journal.png' });
+  await page.keyboard.press('Escape');
+  await expect.poll(() => page.evaluate(() => window.__5RAZAS__?.paused())).toBe(false);
+  expect(errors).toEqual([]);
+});
+
+test('guardado: guardar, recargar la página y continuar recupera el progreso', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__5RAZAS__ !== undefined);
+  await page.keyboard.down('a');
+  await page.waitForTimeout(500);
+  await page.keyboard.up('a');
+  const before = await page.evaluate(() => window.__5RAZAS__?.player());
+  expect(await page.evaluate(() => window.__5RAZAS__?.save())).toBe(true);
+
+  await page.reload();
+  await expect(page.locator('canvas')).toBeVisible();
+  await page.waitForTimeout(800); // el menú consulta IndexedDB
+  await page.screenshot({ path: 'test-results/16-menu-continue.png' });
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__5RAZAS__ !== undefined);
+  const after = await page.evaluate(() => window.__5RAZAS__?.player());
+  expect(after?.x).toBeCloseTo(before?.x ?? 0, 1);
+  expect(after?.y).toBeCloseTo(before?.y ?? 0, 1);
+  expect(errors).toEqual([]);
+});

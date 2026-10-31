@@ -86,6 +86,65 @@ function parseBehavior(issues: Issues, b: Json, p: string): CreatureBehavior | u
   }
 }
 
+/** Fase de un jefe (GAME_DESIGN §9): se activa cuando la vida cae por debajo de `hpBelow`. */
+export interface BossPhase {
+  readonly name: string;
+  /** Fracción de vida (0–1] a partir de la cual empieza la fase. La primera fase usa 1. */
+  readonly hpBelow: number;
+  /** Habilidades disponibles en esta fase, por orden de prioridad. */
+  readonly abilities: readonly string[];
+  readonly speedMultiplier: number;
+  /** Multiplica la recuperación de sus habilidades (< 1 = ataca más seguido). */
+  readonly cooldownMultiplier: number;
+  /** Obstáculos temporales que hace aparecer alrededor del jugador. */
+  readonly obstacles: { readonly count: number; readonly radius: number; readonly duration: number; readonly every: number } | null;
+}
+
+export interface BossConfig {
+  readonly phases: readonly BossPhase[];
+  /** Segundos de transición entre fases (invulnerable y sin actuar). */
+  readonly transitionSeconds: number;
+}
+
+function parseBoss(issues: Issues, raw: unknown, p: string): BossConfig | null {
+  if (raw === undefined || raw === null) return null;
+  const b = issues.record(raw, p) ?? {};
+  const phases = (issues.array(b['phases'], `${p}.phases`) ?? []).flatMap((ph, i): BossPhase[] => {
+    const pp = `${p}.phases[${i}]`;
+    const r = issues.record(ph, pp);
+    if (!r) return [];
+    const abilities = (issues.array(r['abilities'], `${pp}.abilities`) ?? []).filter(
+      (a, j): a is string => issues.string(a, `${pp}.abilities[${j}]`, { pattern: ID_PATTERN }) !== undefined,
+    );
+    if (abilities.length === 0) issues.add(`${pp}.abilities`, 'cada fase necesita al menos una habilidad');
+    let obstacles: BossPhase['obstacles'] = null;
+    if (r['obstacles'] !== null && r['obstacles'] !== undefined) {
+      const o = issues.record(r['obstacles'], `${pp}.obstacles`) ?? {};
+      obstacles = {
+        count: issues.number(o['count'], `${pp}.obstacles.count`, { integer: true, min: 1, max: 20 }) ?? 1,
+        radius: issues.number(o['radius'], `${pp}.obstacles.radius`, { min: 1, max: 10 }) ?? 2,
+        duration: issues.number(o['duration'], `${pp}.obstacles.duration`, { min: 0.5, max: 60 }) ?? 5,
+        every: issues.number(o['every'], `${pp}.obstacles.every`, { min: 1, max: 120 }) ?? 10,
+      };
+    }
+    return [
+      {
+        name: issues.string(r['name'], `${pp}.name`) ?? '',
+        hpBelow: issues.number(r['hpBelow'], `${pp}.hpBelow`, { min: 0.01, max: 1 }) ?? 1,
+        abilities,
+        speedMultiplier: issues.number(r['speedMultiplier'], `${pp}.speedMultiplier`, { min: 0.1, max: 5 }) ?? 1,
+        cooldownMultiplier: issues.number(r['cooldownMultiplier'], `${pp}.cooldownMultiplier`, { min: 0.1, max: 5 }) ?? 1,
+        obstacles,
+      },
+    ];
+  });
+  if (phases[0]?.hpBelow !== 1) issues.add(`${p}.phases`, 'la primera fase debe tener hpBelow = 1');
+  for (let i = 1; i < phases.length; i++) {
+    if ((phases[i]?.hpBelow ?? 0) >= (phases[i - 1]?.hpBelow ?? 1)) issues.add(`${p}.phases[${i}].hpBelow`, 'debe ser menor que el de la fase anterior');
+  }
+  return { phases, transitionSeconds: issues.number(b['transitionSeconds'], `${p}.transitionSeconds`, { min: 0, max: 10 }) ?? 1 };
+}
+
 export interface CreatureDefinition {
   readonly id: string;
   readonly name: string;
@@ -105,6 +164,8 @@ export interface CreatureDefinition {
   readonly colliderHalfSize: number;
   /** Ver Combatant.poise. */
   readonly poise: number;
+  /** Configuración de jefe (fases); null para el resto de criaturas. */
+  readonly boss: BossConfig | null;
   /** Tiles de suelo (capas ground/detail) donde puede aparecer; vacío = cualquiera transitable. */
   readonly habitat: readonly string[];
   readonly spawnRules: {
@@ -156,6 +217,7 @@ export function parseCreatureCatalog(raw: unknown, source: string): CreatureCata
       hurtboxRadius: issues.number(c['hurtboxRadius'], `${p}.hurtboxRadius`, { min: 0.05, max: 4 }),
       colliderHalfSize: issues.number(c['colliderHalfSize'], `${p}.colliderHalfSize`, { min: 0.05, max: 0.49 }),
       poise: issues.number(c['poise'], `${p}.poise`, { min: 0, max: 100 }),
+      boss: parseBoss(issues, c['boss'], `${p}.boss`),
       habitat: (issues.array(c['habitat'] ?? [], `${p}.habitat`) ?? []).filter(
         (t, j): t is string => issues.string(t, `${p}.habitat[${j}]`, { pattern: ID_PATTERN }) !== undefined,
       ),
@@ -164,6 +226,7 @@ export function parseCreatureCatalog(raw: unknown, source: string): CreatureCata
         activeHours: parseHourRange(issues, sr['activeHours'], `${p}.spawnRules.activeHours`),
       },
     };
+    if (def.category === 'boss' && !def.boss) issues.add(`${p}.boss`, 'un jefe necesita la configuración "boss"');
     if (def.id && all.has(def.id)) issues.add(`${p}.id`, `identificador duplicado "${def.id}"`);
     if (issues.count === before) all.set(def.id as string, def as CreatureDefinition);
   });

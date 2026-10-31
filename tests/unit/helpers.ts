@@ -5,6 +5,8 @@ import { parseStatusCatalog } from '../../src/core/combat/statusEffects.ts';
 import { parseCharacterConfig } from '../../src/core/data/characterConfig.ts';
 import { parseCreatureCatalog } from '../../src/core/creatures/creatureCatalog.ts';
 import { parseRecipeBook } from '../../src/core/alchemy/alchemy.ts';
+import { parseNarrative } from '../../src/core/narrative/dialogue.ts';
+import { parseQuestCatalog } from '../../src/core/quests/quests.ts';
 import { parseElementCatalog } from '../../src/core/alchemy/elements.ts';
 import { parsePlantCatalog } from '../../src/core/ecosystem/plants.ts';
 import { parseEquipmentSets } from '../../src/core/items/equipmentSets.ts';
@@ -20,6 +22,9 @@ import { parseClockConfig } from '../../src/core/world/worldClock.ts';
 import recipesJson from '../../src/data/alchemy/recipes.json';
 import elementsJson from '../../src/data/alchemy/elements.json';
 import playerJson from '../../src/data/characters/provisional-player.json';
+import questsJson from '../../src/data/narrative/quests.json';
+import npcsJson from '../../src/data/narrative/npcs.json';
+import dialoguesJson from '../../src/data/narrative/dialogues.json';
 import abilitiesJson from '../../src/data/combat/abilities.json';
 import statusesJson from '../../src/data/combat/statuses.json';
 import creaturesJson from '../../src/data/creatures/creatures.json';
@@ -51,6 +56,8 @@ export function loadTestContent(): SimulationContent {
     clock: parseClockConfig(worldJson, 'world'),
     elements: parseElementCatalog(elementsJson, 'elements'),
     recipes: parseRecipeBook(recipesJson, 'recipes'),
+    quests: parseQuestCatalog(questsJson, 'quests'),
+    narrative: parseNarrative(npcsJson, dialoguesJson, 'narrative'),
   };
 }
 

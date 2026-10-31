@@ -1,0 +1,248 @@
+{
+  "$comment": "PROVISIONAL — ficción original del vertical slice, sin referencias a pueblos, ceremonias ni entidades reales. Pendiente de revisión humana antes de vincularla a un territorio cultural (CLAUDE.md, GAME_DESIGN §2).",
+  "dialogues": [
+    {
+      "id": "vigia-intro",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Viajero, llegas en un momento extraño. El bosque está inquieto.",
+        "Los Brotes Espinosos crecen donde antes había claros, y las polillas de ceniza vuelan a pleno día.",
+        "Antes de que esto empeore, necesito saber si puedes defenderte."
+      ],
+      "options": [
+        {
+          "text": "Te ayudaré. (Aceptar: Señales en el bosque)",
+          "action": {
+            "type": "accept",
+            "questId": "senales-en-el-bosque",
+            "next": "vigia-brotes-activo"
+          }
+        },
+        {
+          "text": "Ahora no.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-brotes-activo",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Derrota tres Brotes Espinosos. Los encontrarás en la cantera y en los senderos del sur y del este."
+      ],
+      "options": [
+        {
+          "text": "Adiós.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-brotes-hecho",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Lo lograste. Pero los brotes no nacen solos: algo los alimenta desde las raíces."
+      ],
+      "options": [
+        {
+          "text": "Entregar misión.",
+          "action": {
+            "type": "turn-in",
+            "questId": "senales-en-el-bosque",
+            "next": "vigia-plantas-oferta"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-plantas-oferta",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Para lo que viene necesitarás algo más que fuerza.",
+        "Las plantas del bosque guardan propiedades que pocos saben combinar. Tráeme tres Hojas Carmesí; crecen junto al sendero del oeste."
+      ],
+      "options": [
+        {
+          "text": "Iré a buscarlas. (Aceptar: Saber de las plantas)",
+          "action": {
+            "type": "accept",
+            "questId": "saber-de-las-plantas",
+            "next": "vigia-plantas-activo"
+          }
+        },
+        {
+          "text": "Adiós.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-plantas-activo",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Busca las Hojas Carmesí junto al sendero del oeste. Acércate y pulsa E para recolectarlas."
+      ],
+      "options": [
+        {
+          "text": "Adiós.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-plantas-hecho",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Bien hecho. Toma esta Raíz Solar: crece en la cantera, donde los brotes no dejan acercarse."
+      ],
+      "options": [
+        {
+          "text": "Entregar misión.",
+          "action": {
+            "type": "turn-in",
+            "questId": "saber-de-las-plantas",
+            "next": "vigia-elixir-oferta"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-elixir-oferta",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Ahora combina lo que tienes. Nadie te dirá las recetas: el mortero (K) es el mejor maestro.",
+        "Cuando una mezcla funcione, la recordarás para siempre."
+      ],
+      "options": [
+        {
+          "text": "Probaré. (Aceptar: El primer elixir)",
+          "action": {
+            "type": "accept",
+            "questId": "el-primer-elixir",
+            "next": "vigia-elixir-activo"
+          }
+        },
+        {
+          "text": "Adiós.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-elixir-activo",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Abre el mortero con K y combina dos ingredientes. Las mezclas fallidas también enseñan."
+      ],
+      "options": [
+        {
+          "text": "Adiós.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-elixir-hecho",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Has descubierto una receta. Con ella tus golpes pueden cambiar de naturaleza."
+      ],
+      "options": [
+        {
+          "text": "Entregar misión.",
+          "action": {
+            "type": "turn-in",
+            "questId": "el-primer-elixir",
+            "next": "vigia-centinela-oferta"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-centinela-oferta",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Ya sé qué inquieta al bosque. En el claro del sureste despertó un Centinela de las Raíces.",
+        "Antes cuidaba estos senderos; ahora los devora. Ten cuidado: cambia su forma de luchar a medida que se debilita."
+      ],
+      "options": [
+        {
+          "text": "Lo detendré. (Aceptar: Lo que acecha en el claro)",
+          "action": {
+            "type": "accept",
+            "questId": "el-centinela",
+            "next": "vigia-centinela-activo"
+          }
+        },
+        {
+          "text": "Adiós.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-centinela-activo",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "El claro está al sureste, siguiendo el sendero del este y luego hacia el sur.",
+        "Cuando el Centinela se agote tras su tempestad de raíces, ese es el momento de golpear."
+      ],
+      "options": [
+        {
+          "text": "Adiós.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-centinela-hecho",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "El bosque respira de nuevo. Pero el Centinela no despertó por sí solo…",
+        "Los caminos hacia los otros territorios tiemblan con la misma inquietud. Tu viaje apenas comienza."
+      ],
+      "options": [
+        {
+          "text": "Entregar misión.",
+          "action": {
+            "type": "turn-in",
+            "questId": "el-centinela",
+            "next": "vigia-epilogo"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vigia-epilogo",
+      "speaker": "Vigía del Sendero",
+      "lines": [
+        "Gracias, viajero. Descansa cuando puedas: el equilibrio de los cinco territorios aún pende de un hilo.",
+        "(Fin del vertical slice 0.1.0. Puedes seguir explorando, recolectando y combatiendo.)"
+      ],
+      "options": [
+        {
+          "text": "Adiós.",
+          "action": {
+            "type": "close"
+          }
+        }
+      ]
+    }
+  ]
+}

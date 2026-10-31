@@ -153,3 +153,18 @@ export function parseAbilityCatalog(raw: unknown, source: string): AbilityCatalo
     },
   };
 }
+
+/** Distancia máxima (celdas) a la que una habilidad puede alcanzar a un objetivo desde el lanzador. */
+export function abilityReach(a: AbilityDefinition): number {
+  const dash = a.dash?.distance ?? 0;
+  switch (a.area.shape) {
+    case 'none':
+      return 0;
+    case 'arc':
+      return a.area.radius + dash;
+    case 'circle':
+      return a.range + a.area.radius + dash;
+    case 'line':
+      return a.area.length + dash;
+  }
+}

@@ -6,6 +6,8 @@ import type { GameContent } from '../content.ts';
 import { RARITY_COLORS } from '../rendering/itemIcons.ts';
 import type { GameSession } from '../session.ts';
 import { ActionBar } from '../ui/actionBar.ts';
+import { BossBar } from '../ui/bossBar.ts';
+import { QuestTracker } from '../ui/questTracker.ts';
 import { Minimap } from '../ui/minimap.ts';
 import { NotificationFeed } from '../ui/notifications.ts';
 import { PlayerFrame } from '../ui/playerFrame.ts';
@@ -38,6 +40,8 @@ export class HudScene extends Phaser.Scene {
   private notice!: Phaser.GameObjects.Text;
   private prompt!: Phaser.GameObjects.Text;
   private effectsLine!: Phaser.GameObjects.Text;
+  private questTracker!: QuestTracker;
+  private bossBar!: BossBar;
   private banner!: Phaser.GameObjects.Text;
   private deathOverlay!: Phaser.GameObjects.Rectangle;
   private noticeUntil = 0;
@@ -68,13 +72,15 @@ export class HudScene extends Phaser.Scene {
     this.feed = new NotificationFeed(this);
     this.sectorLabel = this.add.text(0, 0, '', { ...TEXT, fontSize: '13px', align: 'right' }).setOrigin(1, 0);
     this.hint = this.add
-      .text(0, 0, 'WASD moverse · Clic atacar · 1 2 3 poderes · R final · Espacio evadir · Q F consumibles · E recolectar · I inventario · K alquimia', {
+      .text(0, 0, 'WASD moverse · Clic atacar · 1 2 3 poderes · R final · Espacio evadir · Q F consumibles · E interactuar · I inventario · K alquimia · J misiones · Esc menú', {
         ...TEXT,
         fontSize: '11px',
         color: '#a9a596',
       })
       .setOrigin(0.5, 1);
     this.effectsLine = this.add.text(MARGIN + 2, MARGIN + 94, '', { ...TEXT, fontSize: '11px' });
+    this.questTracker = new QuestTracker(this);
+    this.bossBar = new BossBar(this);
     this.prompt = this.add
       .text(0, 0, '', { ...TEXT, fontSize: '14px', color: '#f2efe0', backgroundColor: '#0b0d12cc', padding: { x: 8, y: 4 } })
       .setOrigin(0.5, 1)
@@ -86,10 +92,15 @@ export class HudScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const offEvents = this.session.onEvent((e) => { this.onSimEvent(e); });
+    const offSave = this.session.onSave((kind, ok) => {
+      if (kind === 'manual' || !ok) this.showNotice(ok ? 'Partida guardada' : 'No se pudo guardar', 1.5);
+      else this.feed.push('Guardado automático', '#7a7f8c', this.session.sim.time);
+    });
     this.layout(this.scale.width, this.scale.height);
     this.scale.on('resize', (size: Phaser.Structs.Size) => { this.layout(size.width, size.height); }, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       offEvents();
+      offSave();
       this.scale.off('resize', undefined, this);
       this.minimap.destroy();
     });
@@ -152,6 +163,30 @@ export class HudScene extends Phaser.Scene {
         this.feed.push(`Ataques con ${el.name}`, el.color, now);
         break;
       }
+      case 'quest-accepted':
+        this.feed.push(`Nueva misión: ${this.content.quests.get(e.questId).name}`, '#e8c872', now);
+        break;
+      case 'quest-progress': {
+        const q = this.content.quests.get(e.questId);
+        const o = q.objectives.find((x) => x.id === e.objectiveId);
+        if (o) this.feed.push(`${o.description}: ${e.current}/${e.count}`, '#e8c872', now);
+        break;
+      }
+      case 'quest-completed':
+        this.banner.setText(`Misión cumplida\n${this.content.quests.get(e.questId).name}`);
+        this.bannerUntil = now + 2.5;
+        break;
+      case 'quest-turned-in':
+        this.feed.push(`Misión entregada: ${this.content.quests.get(e.questId).name}`, '#9fe870', now);
+        break;
+      case 'boss-phase':
+        this.banner.setText(`${this.session.sim.creatures.get(e.id)?.def.name ?? ''}\n${e.name}`);
+        this.bannerUntil = now + 2;
+        break;
+      case 'boss-defeated':
+        this.banner.setText(`¡${this.content.creatures.get(e.creatureId).name} derrotado!`);
+        this.bannerUntil = now + 3.5;
+        break;
       case 'harvested': {
         this.feed.push(`+${e.quantity} ${this.itemName(e.itemId)}`, '#9fe870', now);
         break;
@@ -184,6 +219,8 @@ export class HudScene extends Phaser.Scene {
     this.quickSlots.layout(width - MARGIN, height - MARGIN);
     this.hint.setPosition(width / 2, height - 6);
     this.notice.setPosition(width / 2, height * 0.3);
+    this.questTracker.layout(MARGIN + 2, MARGIN + 114);
+    this.bossBar.layout(width / 2, MARGIN + 18);
     this.prompt.setPosition(width / 2, height - MARGIN - 90);
     this.banner.setPosition(width / 2, height * 0.2);
     this.deathOverlay.setSize(width, height);
@@ -207,6 +244,11 @@ export class HudScene extends Phaser.Scene {
     );
     this.updatePrompt();
     this.updateEffects();
+    this.questTracker.update(sim.quests);
+    const boss = [...sim.creatures.values()].find(
+      (c) => c.boss !== null && (c.brain.state === 'chase' || c.combatant.hp < c.combatant.stats.life),
+    );
+    this.bossBar.update(boss ?? null);
   }
 
   /** Infusión y estados activos del jugador, con su tiempo restante. */
@@ -222,11 +264,15 @@ export class HudScene extends Phaser.Scene {
     this.effectsLine.setColor(element ? this.content.elements.get(element).color : '#e6e1cf');
   }
 
-  /** Aviso de interacción con la planta al alcance (GAME_DESIGN §12, tecla E). */
+  /** Aviso de interacción con el PNJ o la planta al alcance (GAME_DESIGN §12, tecla E). */
   private updatePrompt(): void {
     const target = this.session.paused ? null : this.session.sim.interactionTarget();
     if (!target) {
       this.prompt.setVisible(false);
+      return;
+    }
+    if (target.kind === 'npc') {
+      this.prompt.setText(`E: Hablar con ${target.name}`).setColor('#f2efe0').setVisible(true);
       return;
     }
     const plant = this.content.plants.get(target.node.plantId);

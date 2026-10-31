@@ -52,7 +52,6 @@ export class InventoryScene extends Phaser.Scene {
     this.content = this.registry.get(REGISTRY_CONTENT) as GameContent;
     this.session.paused = true;
     this.layer = this.add.container(0, 0);
-    this.input.keyboard?.on('keydown-ESC', () => { this.close(); });
     this.scale.on('resize', () => { this.render(); }, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off('resize', undefined, this);

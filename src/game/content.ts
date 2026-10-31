@@ -4,6 +4,8 @@ import { parseCharacterConfig } from '../core/data/characterConfig.ts';
 import { DataValidationError } from '../core/data/validate.ts';
 import { parseCreatureCatalog } from '../core/creatures/creatureCatalog.ts';
 import { parseRecipeBook } from '../core/alchemy/alchemy.ts';
+import { parseNarrative } from '../core/narrative/dialogue.ts';
+import { parseQuestCatalog } from '../core/quests/quests.ts';
 import { parseElementCatalog } from '../core/alchemy/elements.ts';
 import { parsePlantCatalog } from '../core/ecosystem/plants.ts';
 import { parseEquipmentSets } from '../core/items/equipmentSets.ts';
@@ -18,6 +20,9 @@ import { parseClockConfig } from '../core/world/worldClock.ts';
 import recipesJson from '../data/alchemy/recipes.json';
 import elementsJson from '../data/alchemy/elements.json';
 import playerJson from '../data/characters/provisional-player.json';
+import questsJson from '../data/narrative/quests.json';
+import npcsJson from '../data/narrative/npcs.json';
+import dialoguesJson from '../data/narrative/dialogues.json';
 import abilitiesJson from '../data/combat/abilities.json';
 import statusesJson from '../data/combat/statuses.json';
 import controlsJson from '../data/controls.json';
@@ -56,6 +61,8 @@ export function loadContent(): GameContent {
     clock: parseClockConfig(worldJson, 'data/world.json'),
     elements: parseElementCatalog(elementsJson, 'data/alchemy/elements.json'),
     recipes: parseRecipeBook(recipesJson, 'data/alchemy/recipes.json'),
+    quests: parseQuestCatalog(questsJson, 'data/narrative/quests.json'),
+    narrative: parseNarrative(npcsJson, dialoguesJson, 'data/narrative'),
     controlsRaw: controlsJson,
   };
   const problems = validateContentReferences(content);

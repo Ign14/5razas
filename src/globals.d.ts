@@ -11,6 +11,9 @@ interface FiveRazasDebug {
   equipment(): Record<string, string>;
   paused(): boolean;
   discoveries(): string[];
+  quests(): Record<string, { state: string; progress: Record<string, number> }>;
+  boss(): { id: string; x: number; y: number; hp: number; phase: number } | null;
+  save(): Promise<boolean>;
   drops(): { itemId: string; x: number; y: number }[];
   hour(): number;
   plants(): { id: string; plantId: string; x: number; y: number; ready: boolean }[];

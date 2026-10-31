@@ -119,3 +119,35 @@ El diseño lista cinco elementos (§10.3) pero solo da ejemplos para tres. Se a�
 ## D-029 — La interacción prefiere plantas maduras
 Con dos plantas al alcance, se apunta a la madura más cercana; antes, una planta recién recolectada bloqueaba la de
 al lado (detectado en la prueba visual).
+
+## D-030 — Extracción de CreaturePopulation y de la validación de contenido (2026-10-31)
+`WorldSimulation` superaba las 600 líneas. La aparición, los horarios, la IA y los jefes pasaron a
+`CreaturePopulation`, y las referencias cruzadas a `contentValidation.ts`. El comportamiento no cambió (todas las
+pruebas existentes pasaron sin modificaciones antes de añadir el jefe).
+
+## D-031 — Fases de jefe por datos, sin código específico del Centinela
+Umbrales de vida, habilidades por fase, multiplicadores y obstáculos se declaran en `creatures.json`. La
+"vulnerabilidad temporal" (§9) es un estado que la propia Tempestad de raíces aplica al jefe, sin reglas especiales.
+
+## D-032 — Un jefe ocioso y herido se reinicia
+Detectado en la prueba visual: tras la muerte del jugador el jefe se curaba pero seguía en la fase 3. Ahora vuelve a
+la fase 1 con su vida y atributos originales. No se reinicia durante transiciones o ataques (la IA no actualiza su
+estado mientras está ocupada), lo que evitaba curarlo justo tras un primer golpe fuerte.
+
+## D-033 — Narrativa provisional y culturalmente neutra (pendiente de revisión humana)
+El diseño pide una "historia del territorio" pero también prohíbe inventar atribuciones culturales y exige revisión
+humana para contenido sensible. Se escribió una historia breve, original y neutra (Vigía del Sendero, Centinela
+de las Raíces, equilibrio de los cinco territorios) sin nombres, ceremonias, símbolos ni entidades de pueblos reales.
+Los archivos de `data/narrative/` lo indican en su `$comment`. Vincularla a un pueblo concreto requiere esa revisión.
+
+## D-034 — IndexedDB nativo en lugar de la librería idb
+Una sola tienda y tres operaciones: ~50 líneas sin dependencias. El formato y la validación viven en el core
+(`saveGame.ts`), probados con `MemorySaveStorage`.
+
+## D-035 — Suma de verificación FNV-1a y migraciones encadenadas
+FNV-1a detecta archivos dañados o editados (no es seguridad criptográfica, innecesaria sin servidor). Cada cambio
+futuro de esquema añade una función en `SAVE_MIGRATIONS` y sube `SAVE_SCHEMA_VERSION`; las pruebas cubren la cadena.
+
+## D-036 — Esc centralizado en GameScene
+Las pantallas superpuestas no manejan Esc por su cuenta: el mismo evento las cerraba y luego abría el menú de pausa.
+GameScene decide: si hay una pantalla abierta la cierra; si no, abre la pausa.

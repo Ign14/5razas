@@ -1,5 +1,18 @@
 # Tareas
 
+## Hecho — 2026-10-31 (Fase 6: jefe, narrativa y guardado) — vertical slice jugable de inicio a fin
+
+- [x] Refactor: `CreaturePopulation` y `contentValidation` extraídos de `WorldSimulation`.
+- [x] Centinela de las Raíces con tres fases, obstáculos temporales, ataque combinado y vulnerabilidad.
+- [x] Barra de jefe con fases, avisos de fase y de victoria; botín especial; no reaparece.
+- [x] Cuatro misiones encadenadas (combate, recolección, alquimia, jefe) con recompensas.
+- [x] PNJ "Vigía del Sendero" con diálogos según el estado de las misiones; indicadores "!" y "?".
+- [x] Diario de misiones (J), seguimiento en el HUD, menú de pausa (Esc).
+- [x] Guardado en IndexedDB: manual, automático y en hitos; continuar desde el menú; versión, suma de
+      verificación, validación y migraciones.
+- [x] Pruebas: 146 unitarias y 8 E2E.
+
+
 ## Hecho — 2026-10-31 (Fase 5: alquimia)
 
 - [x] Motor de recetas por datos (9 recetas: las 5 del diseño, electricidad, viento y 2 preparaciones de alimento).
@@ -77,9 +90,10 @@
 
 ## Pendiente — siguiente
 
-- [ ] **Fase 6 — Jefe y narrativa**: Centinela de las Raíces (3 fases), misiones, diálogos, recompensas especiales,
-      historia del territorio y guardado completo en IndexedDB (con versión de esquema y migraciones).
-- [ ] Extraer `CreaturePopulation` de `WorldSimulation` (apariciones, horarios).
+- [ ] **Revisión humana de la narrativa** (D-033) antes de asociarla a un pueblo o territorio cultural.
+- [ ] Prueba de rendimiento definida (§14, criterio 18) y culling de objetos.
+- [ ] Pantalla de opciones (teclas configurables, escala) que use `settings` del guardado.
+- [ ] Animaciones de ataque del personaje y arte definitivo (evaluar Isometric Stone Soup, CC0).
 - [ ] Reordenar el inventario arrastrando objetos (hoy la API `swap` existe pero no hay interfaz).
 - [ ] Descartar objetos desde el inventario.
 - [ ] Animaciones de ataque propias del personaje (hoy solo idle/caminar + efectos).

@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { AlchemyScene } from '../game/scenes/AlchemyScene.ts';
 import { BootScene } from '../game/scenes/BootScene.ts';
+import { DialogueScene } from '../game/scenes/DialogueScene.ts';
+import { JournalScene } from '../game/scenes/JournalScene.ts';
+import { PauseScene } from '../game/scenes/PauseScene.ts';
 import { GameScene } from '../game/scenes/GameScene.ts';
 import { HudScene } from '../game/scenes/HudScene.ts';
 import { InventoryScene } from '../game/scenes/InventoryScene.ts';
@@ -19,6 +22,6 @@ export function createGameConfig(parent: string): Phaser.Types.Core.GameConfig {
       height: 720,
     },
     fps: { target: 60 },
-    scene: [BootScene, MenuScene, GameScene, HudScene, InventoryScene, AlchemyScene],
+    scene: [BootScene, MenuScene, GameScene, HudScene, InventoryScene, AlchemyScene, DialogueScene, JournalScene, PauseScene],
   };
 }

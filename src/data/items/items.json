@@ -808,6 +808,60 @@
         ],
         "cooldown": 6
       }
+    },
+    {
+      "id": "corazon-de-raiz",
+      "name": "Corazón de raíz",
+      "description": "Recurso raro que el Centinela guardaba en su interior. Material de fabricación.",
+      "category": "material",
+      "rarity": "epic",
+      "maxStack": 10,
+      "icon": {
+        "shape": "shard",
+        "color": "#c08040"
+      },
+      "equip": null,
+      "use": null
+    },
+    {
+      "id": "amuleto-del-centinela",
+      "name": "Amuleto del Centinela",
+      "description": "Pieza de equipamiento especial obtenida del Centinela de las Raíces.",
+      "category": "accessory",
+      "rarity": "epic",
+      "maxStack": 1,
+      "icon": {
+        "shape": "amulet",
+        "color": "#c08040"
+      },
+      "equip": {
+        "slot": "accessory",
+        "levelRequirement": 5,
+        "setId": null,
+        "modifiers": [
+          {
+            "stat": "life",
+            "op": "add",
+            "value": 40
+          },
+          {
+            "stat": "power",
+            "op": "add",
+            "value": 10
+          },
+          {
+            "stat": "defense",
+            "op": "add",
+            "value": 4
+          },
+          {
+            "stat": "crit",
+            "op": "add",
+            "value": 0.05
+          }
+        ]
+      },
+      "use": null
     }
   ]
 }

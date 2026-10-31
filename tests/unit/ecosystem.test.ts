@@ -187,8 +187,8 @@ describe('ecosistema en la simulación', () => {
   it('las referencias del contenido son válidas', () => {
     expect(validateContentReferences(content)).toEqual([]);
     // La validación solo lee estas propiedades del mapa.
-    const { id, catalog, spawnZones } = content.map;
-    const map = { id, catalog, spawnZones, gatherZones: [{ id: 'z', plantId: 'nada', center: { x: 1, y: 1 }, radius: 1, count: 1 }] };
+    const { id, catalog, spawnZones, npcs } = content.map;
+    const map = { id, catalog, spawnZones, npcs, gatherZones: [{ id: 'z', plantId: 'nada', center: { x: 1, y: 1 }, radius: 1, count: 1 }] };
     const bad = { ...content, map: map as unknown as typeof content.map };
     expect(validateContentReferences(bad)).toContainEqual(expect.stringContaining('planta "nada" inexistente'));
   });
@@ -237,7 +237,8 @@ describe('ecosistema en la simulación', () => {
     expect(sim.update(DT, { ...IDLE, interact: true })).toContainEqual({ type: 'interact-failed', reason: 'regrowing' });
     // Fuera del alcance de interacción no hay objetivo.
     sim.player.position = { x: node.position.x + INTERACT_RADIUS + 0.5, y: node.position.y };
-    expect(sim.interactionTarget()?.node.id).not.toBe(node.id);
+    const target = sim.interactionTarget();
+    expect(target?.kind === 'plant' ? target.node.id : null).not.toBe(node.id);
   });
 
   it('cazar un animal huidizo entrega XP y botín de fauna', () => {

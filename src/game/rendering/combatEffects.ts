@@ -14,6 +14,7 @@ const VFX_COLORS: Readonly<Record<string, number>> = {
   dodge: 0xffffff,
   'enemy-slash': 0xff5a4a,
   'enemy-dive': 0xff8a3a,
+  'boss-root': 0xd9822b,
 };
 const DEFAULT_COLOR = 0xffffff;
 

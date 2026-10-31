@@ -1,4 +1,3 @@
-import { CreatureBrain } from '../ai/creatureBrain.ts';
 import {
   combinedProperties,
   DiscoveryBook,
@@ -7,29 +6,35 @@ import {
   type RecipeBook,
 } from '../alchemy/alchemy.ts';
 import type { ElementCatalog } from '../alchemy/elements.ts';
+import { selectDialogue, type NarrativeCatalog } from '../narrative/dialogue.ts';
+import type { SavePayload } from '../persistence/saveGame.ts';
+import { QuestLog, type QuestCatalog, type QuestSignal, type QuestUpdate } from '../quests/quests.ts';
+import { EQUIP_SLOTS } from '../items/itemCatalog.ts';
 import { PlayerCharacter, type ItemFailure, type ItemResult } from '../character/playerCharacter.ts';
-import { Navigator } from '../ai/navigator.ts';
 import type { AbilityCatalog, AbilityDefinition } from '../combat/abilities.ts';
 import { Combatant } from '../combat/combatant.ts';
 import { CombatWorld, type CombatEvent, type UseFailure } from '../combat/combatWorld.ts';
 import type { StatusCatalog } from '../combat/statusEffects.ts';
 import { PlantField, type AlchemyElement, type HarvestFailure, type PlantCatalog, type PlantNode } from '../ecosystem/plants.ts';
 import type { CharacterConfig } from '../data/characterConfig.ts';
-import type { CreatureCatalog, CreatureDefinition } from '../creatures/creatureCatalog.ts';
+import type { CreatureCatalog } from '../creatures/creatureCatalog.ts';
 import { cellToScreen, screenDirToCellDir } from '../math/iso.ts';
 import { createRng, type Rng } from '../math/random.ts';
-import { distance, length, type Vec2 } from '../math/vector.ts';
-import { MAX_DT_SECONDS, stepMotion, stepMotionCells, type MotionState } from '../movement/characterMotion.ts';
+import { length, type Vec2 } from '../math/vector.ts';
+import { MAX_DT_SECONDS, stepMotion, type MotionState } from '../movement/characterMotion.ts';
 import { directionFromScreenVector } from '../movement/direction.ts';
 import type { EquipmentSetCatalog } from '../items/equipmentSets.ts';
 import type { EquipSlot, ItemCatalog, UseEffect } from '../items/itemCatalog.ts';
 import { rollLoot, type LootTableCatalog } from '../items/lootTables.ts';
 import { DropField, type WorldDrop } from '../items/worldDrops.ts';
 import type { ActionSlot, ProfessionDefinition } from '../professions/profession.ts';
-import { creatureXp, statsAtLevel, type ProgressionConfig } from '../progression/progression.ts';
-import { collides } from '../world/collision.ts';
-import { hourAt, inHourRange, type ClockConfig } from '../world/worldClock.ts';
-import type { SpawnZone, WorldMap } from '../world/worldMap.ts';
+import { creatureXp, type ProgressionConfig } from '../progression/progression.ts';
+import { DynamicObstacles } from '../world/dynamicObstacles.ts';
+import { hourAt, type ClockConfig } from '../world/worldClock.ts';
+import type { WorldMap } from '../world/worldMap.ts';
+import { CreaturePopulation, type CreatureInstance, type PopulationEvent } from './creaturePopulation.ts';
+
+export { ACTIVE_RADIUS, type CreatureInstance } from './creaturePopulation.ts';
 
 export interface SimulationContent {
   readonly map: WorldMap;
@@ -46,7 +51,14 @@ export interface SimulationContent {
   readonly clock: ClockConfig;
   readonly elements: ElementCatalog;
   readonly recipes: RecipeBook;
+  readonly quests: QuestCatalog;
+  readonly narrative: NarrativeCatalog;
 }
+
+/** Objetivo de la tecla de interacción: un PNJ (conversar) o una planta (recolectar). */
+export type InteractionTarget =
+  | { readonly kind: 'npc'; readonly npcId: string; readonly name: string }
+  | { readonly kind: 'plant'; readonly node: PlantNode; readonly ready: boolean };
 
 export type AlchemyFailure = 'too-few' | 'too-many' | 'missing-ingredients' | 'invalid-ingredient' | 'dead';
 export type AlchemyResult =
@@ -82,7 +94,7 @@ export interface PlayerCommand {
 
 export type SimEvent =
   | CombatEvent
-  | { readonly type: 'spawned'; readonly id: string; readonly creatureId: string }
+  | PopulationEvent
   | { readonly type: 'defeated'; readonly id: string; readonly creatureId: string; readonly xp: number; readonly lootTable: string; readonly position: Vec2 }
   | { readonly type: 'player-died' }
   | { readonly type: 'player-respawned' }
@@ -96,38 +108,26 @@ export type SimEvent =
   | { readonly type: 'item-used'; readonly itemId: string }
   | { readonly type: 'item-failed'; readonly itemId: string | null; readonly reason: ItemFailure }
   | { readonly type: 'equipment-changed' }
-  | { readonly type: 'despawned'; readonly id: string }
   | { readonly type: 'harvested'; readonly nodeId: string; readonly plantId: string; readonly itemId: string; readonly quantity: number }
   | { readonly type: 'interact-failed'; readonly reason: HarvestFailure | 'nothing' }
   | { readonly type: 'alchemy-result'; readonly result: AlchemyResult & { readonly ok: true } }
-  | { readonly type: 'infusion'; readonly elementId: string; readonly until: number };
-
-export interface CreatureInstance {
-  readonly id: string;
-  readonly def: CreatureDefinition;
-  readonly zoneId: string;
-  readonly combatant: Combatant;
-  readonly brain: CreatureBrain;
-  /** Ataque de la criatura; null para fauna que solo huye. */
-  readonly ability: AbilityDefinition | null;
-  readonly level: number;
-  motion: MotionState;
-}
+  | { readonly type: 'infusion'; readonly elementId: string; readonly until: number }
+  | QuestUpdate
+  | { readonly type: 'quest-accepted'; readonly questId: string }
+  | { readonly type: 'quest-turned-in'; readonly questId: string }
+  | { readonly type: 'dialogue'; readonly npcId: string; readonly dialogueId: string }
+  | { readonly type: 'boss-defeated'; readonly creatureId: string };
 
 export const PLAYER_ID = 'player';
-/** Las criaturas más lejanas que esto (celdas) no ejecutan IA (GAME_DESIGN §14). */
-export const ACTIVE_RADIUS = 22;
 export const PLAYER_RESPAWN_SECONDS = 3;
 /** Ventana durante la que se recuerda una acción pulsada mientras el personaje está ocupado. */
 export const INPUT_BUFFER_SECONDS = 0.3;
-/** Distancia mínima al jugador para hacer aparecer criaturas. */
-const SPAWN_SAFE_DISTANCE = 6;
 /** Distancia máxima para interactuar con objetos del mundo (recolección). */
 export const INTERACT_RADIUS = 1.4;
+/** Distancia máxima para conversar con un PNJ. */
+export const TALK_RADIUS = 1.8;
 /** Segundos que el personaje queda ocupado al recolectar. */
 const HARVEST_BUSY_SECONDS = 0.4;
-/** Cada cuánto se revisa qué criaturas salen de su horario. */
-const SCHEDULE_CHECK_SECONDS = 1;
 
 /**
  * Simulación completa del sector: jugador, criaturas, IA, combate y apariciones.
@@ -137,26 +137,27 @@ export class WorldSimulation {
   readonly combat: CombatWorld;
   readonly player: Combatant;
   playerMotion: MotionState;
-  readonly creatures = new Map<string, CreatureInstance>();
+  readonly population: CreaturePopulation;
+  /** Colisiones del mapa más obstáculos temporales. */
+  readonly world: DynamicObstacles;
   readonly character: PlayerCharacter;
   readonly drops = new DropField();
   readonly plants: PlantField;
   readonly discoveries = new DiscoveryBook();
+  readonly quests: QuestLog;
   private readonly content: SimulationContent;
   private readonly rng: Rng;
-  private readonly respawns: { zone: SpawnZone; at: number }[] = [];
   private playerRespawnAt: number | null = null;
   private buffered: { slot: ActionSlot; until: number } | null = null;
-  private serial = 0;
   private events: SimEvent[] = [];
   /** Evita repetir el aviso de inventario lleno en cada fotograma. */
   private inventoryFullNoticeAt = -Infinity;
-  private nextScheduleCheck = 0;
 
   constructor(content: SimulationContent, seed = 1) {
     this.content = content;
     this.rng = createRng(seed);
-    this.combat = new CombatWorld(content.map, content.statuses, this.rng, content.elements);
+    this.world = new DynamicObstacles(content.map);
+    this.combat = new CombatWorld(this.world, content.statuses, this.rng, content.elements);
     const { profession, character, map } = content;
     this.character = new PlayerCharacter({
       profession,
@@ -184,12 +185,22 @@ export class WorldSimulation {
     this.combat.add(this.player);
     this.playerMotion = { position: map.spawn, facing: 's', moving: false };
     this.plants = PlantField.place(map, map.gatherZones, content.plants, this.rng);
-    for (const zone of map.spawnZones) {
-      for (let i = 0; i < zone.count; i++) {
-        // Si la especie no está activa a esta hora, su aparición queda pendiente.
-        if (!this.spawnCreature(zone)) this.respawns.push({ zone, at: 0 });
-      }
-    }
+    this.population = new CreaturePopulation({
+      map,
+      world: this.world,
+      creatures: content.creatures,
+      abilities: content.abilities,
+      combat: this.combat,
+      rng: this.rng,
+      emit: (e) => this.events.push(e),
+    });
+    this.quests = new QuestLog(content.quests);
+    this.population.spawnInitial(this.hour, this.player.position);
+  }
+
+  /** Criaturas presentes en el sector. */
+  get creatures(): ReadonlyMap<string, CreatureInstance> {
+    return this.population.creatures;
   }
 
   get time(): number {
@@ -201,11 +212,74 @@ export class WorldSimulation {
     return hourAt(this.content.clock, this.time);
   }
 
-  /** Planta al alcance del jugador y si puede recolectarse ahora (para el aviso de interacción). */
-  interactionTarget(): { node: PlantNode; ready: boolean } | null {
+  /** PNJ más cercano al alcance de conversación. */
+  private nearestNpc(): { readonly npcId: string } | null {
+    let best: { npcId: string } | null = null;
+    let bestDist = TALK_RADIUS;
+    for (const n of this.content.map.npcs) {
+      const d = Math.hypot(n.position.x - this.player.position.x, n.position.y - this.player.position.y);
+      if (d <= bestDist) {
+        best = n;
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  /** A qué apunta la interacción (E): conversar tiene prioridad sobre recolectar. */
+  interactionTarget(): InteractionTarget | null {
     if (!this.player.alive) return null;
+    const npc = this.nearestNpc();
+    if (npc) return { kind: 'npc', npcId: npc.npcId, name: this.content.narrative.npcs.get(npc.npcId)?.name ?? npc.npcId };
     const node = this.plants.nearest(this.player.position, INTERACT_RADIUS, this.time, this.hour);
-    return node ? { node, ready: this.plants.isReady(node, this.time, this.hour) } : null;
+    return node ? { kind: 'plant', node, ready: this.plants.isReady(node, this.time, this.hour) } : null;
+  }
+
+  // --- Misiones y diálogos ---
+
+  private questSignal(signal: QuestSignal): void {
+    for (const u of this.quests.signal(signal)) this.events.push(u);
+  }
+
+  /**
+   * Ejecuta la opción elegida en un diálogo y devuelve el siguiente diálogo, o null para cerrar.
+   * Las acciones (aceptar o entregar misiones) se validan aquí, no en la interfaz.
+   */
+  chooseDialogueOption(dialogueId: string, optionIndex: number): string | null {
+    const node = this.content.narrative.dialogues.get(dialogueId);
+    const option = node?.options[optionIndex];
+    if (!option) return null;
+    const a = option.action;
+    switch (a.type) {
+      case 'close':
+        return null;
+      case 'goto':
+        return a.next;
+      case 'accept':
+        if (!this.quests.accept(a.questId)) return null;
+        this.events.push({ type: 'quest-accepted', questId: a.questId });
+        for (const u of this.quests.refreshCollect((id) => this.character.inventory.count(id))) this.events.push(u);
+        return a.next;
+      case 'turn-in': {
+        const rewards = this.quests.turnIn(a.questId);
+        if (!rewards) return null;
+        for (const it of rewards.items) this.giveItem(it.itemId, it.quantity);
+        this.events.push({ type: 'quest-turned-in', questId: a.questId });
+        this.addXp(rewards.xp);
+        return a.next;
+      }
+    }
+  }
+
+  /** Entrega un objeto al jugador; lo que no cabe cae al suelo junto a él. */
+  private giveItem(itemId: string, quantity: number): void {
+    const left = this.character.inventory.add(itemId, quantity);
+    this.events.push({ type: 'drop-collected', id: `reward-${itemId}`, itemId, quantity: quantity - left });
+    if (left > 0) {
+      const drop = this.drops.spawn(itemId, left, this.player.position, this.time, this.world, this.rng);
+      this.events.push({ type: 'drop-spawned', drop });
+      this.events.push({ type: 'inventory-full', itemId });
+    }
   }
 
   /** Experiencia total del jugador. */
@@ -292,7 +366,10 @@ export class WorldSimulation {
       properties: combinedProperties(ingredients, this.content.plants),
     };
     this.events.push({ type: 'alchemy-result', result });
-    if (recipe && firstDiscovery) this.addXp(recipe.discoveryXp);
+    if (recipe && firstDiscovery) {
+      this.addXp(recipe.discoveryXp);
+      this.questSignal({ kind: 'discover', target: recipe.id });
+    }
     return result;
   }
 
@@ -334,14 +411,15 @@ export class WorldSimulation {
   update(dtSeconds: number, cmd: PlayerCommand): SimEvent[] {
     const dt = Math.min(Math.max(dtSeconds, 0), MAX_DT_SECONDS);
     this.updatePlayer(dt, cmd);
-    this.updateCreatures(dt);
+    this.population.update(dt, this.player.alive ? this.player : null, this.player.position, this.time, this.rng);
     this.combat.update(dt);
     this.playerMotion = { ...this.playerMotion, position: this.player.position };
-    for (const c of this.creatures.values()) c.motion = { ...c.motion, position: c.combatant.position };
+    this.population.syncMotion();
     for (const e of this.combat.drainEvents()) this.handleCombatEvent(e);
     this.updateDrops();
-    this.processRespawns();
-    this.applySchedules();
+    this.processPlayerRespawn();
+    this.population.maintain(this.time, this.hour, this.player.position);
+    for (const u of this.quests.refreshCollect((id) => this.character.inventory.count(id))) this.events.push(u);
     return this.drainEvents();
   }
 
@@ -393,7 +471,7 @@ export class WorldSimulation {
     if (p.canAct(this.time)) {
       // La posición autoritativa es la del combatiente (puede cambiar por dash, retroceso o carga).
       const base = { ...this.playerMotion, position: p.position };
-      this.playerMotion = stepMotion(base, cmd.move, dt, this.content.map, {
+      this.playerMotion = stepMotion(base, cmd.move, dt, this.world, {
         moveSpeed: p.stats.speed * p.speedMultiplier,
         colliderHalfSize: p.colliderHalfSize,
       });
@@ -405,6 +483,12 @@ export class WorldSimulation {
 
   /** Recolecta la planta más cercana; el resultado va al inventario o, si no cabe, al suelo. */
   private interact(): void {
+    const npc = this.nearestNpc();
+    const npcDef = npc ? this.content.narrative.npcs.get(npc.npcId) : undefined;
+    if (npcDef) {
+      this.events.push({ type: 'dialogue', npcId: npcDef.id, dialogueId: selectDialogue(npcDef, this.quests) });
+      return;
+    }
     const node = this.plants.nearest(this.player.position, INTERACT_RADIUS, this.time, this.hour);
     if (!node) {
       this.events.push({ type: 'interact-failed', reason: 'nothing' });
@@ -423,50 +507,8 @@ export class WorldSimulation {
       this.events.push({ type: 'inventory-full', itemId: r.itemId });
     }
     this.events.push({ type: 'harvested', nodeId: node.id, plantId: node.plantId, itemId: r.itemId, quantity: r.quantity });
+    this.questSignal({ kind: 'gather', target: node.plantId, amount: r.quantity });
     this.addXp(r.xp);
-  }
-
-  /** Las criaturas fuera de su horario desaparecen si están lejos del jugador (no a la vista). */
-  private applySchedules(): void {
-    if (this.time < this.nextScheduleCheck) return;
-    this.nextScheduleCheck = this.time + SCHEDULE_CHECK_SECONDS;
-    const hour = this.hour;
-    for (const c of [...this.creatures.values()]) {
-      if (inHourRange(hour, c.def.spawnRules.activeHours)) continue;
-      if (distance(c.combatant.position, this.player.position) <= ACTIVE_RADIUS) continue;
-      this.creatures.delete(c.id);
-      this.combat.remove(c.id);
-      this.events.push({ type: 'despawned', id: c.id });
-      const zone = this.content.map.spawnZones.find((z) => z.id === c.zoneId);
-      if (zone) this.respawns.push({ zone, at: this.time + SCHEDULE_CHECK_SECONDS });
-    }
-  }
-
-  private updateCreatures(dt: number): void {
-    const target = this.player.alive ? this.player : null;
-    for (const c of this.creatures.values()) {
-      const self = c.combatant;
-      if (!self.alive || distance(self.position, this.player.position) > ACTIVE_RADIUS) continue;
-      const decision = c.brain.decide(self, target, this.time, this.rng);
-      if (decision.face) {
-        c.motion = { ...c.motion, moving: false, facing: directionFromScreenVector(cellToScreen(decision.face)) ?? c.motion.facing };
-      }
-      if (decision.attack && c.ability) {
-        const used = this.combat.useAbility(self.id, c.ability, decision.attack);
-        const facing = directionFromScreenVector(cellToScreen(decision.attack));
-        c.motion = { ...c.motion, moving: false, facing: facing ?? c.motion.facing };
-        if (used.ok) continue;
-      }
-      if (!self.canAct(this.time) || (decision.move.x === 0 && decision.move.y === 0)) {
-        c.motion = { ...c.motion, moving: false };
-        continue;
-      }
-      c.motion = stepMotionCells(c.motion, decision.move, dt, this.content.map, {
-        moveSpeed: self.stats.speed * self.speedMultiplier * decision.speedFactor,
-        colliderHalfSize: self.colliderHalfSize,
-      });
-      self.position = c.motion.position;
-    }
   }
 
   private handleCombatEvent(e: CombatEvent): void {
@@ -478,10 +520,8 @@ export class WorldSimulation {
       this.events.push({ type: 'player-died' });
       return;
     }
-    const c = this.creatures.get(e.targetId);
+    const c = this.population.removeDefeated(e.targetId, this.time);
     if (!c) return;
-    this.creatures.delete(c.id);
-    this.combat.remove(c.id);
     const byPlayer = e.killerId === PLAYER_ID;
     const xp = byPlayer ? creatureXp(this.content.progression, c.def.xpReward, c.level) : 0;
     this.events.push({
@@ -493,158 +533,74 @@ export class WorldSimulation {
       position: c.combatant.position,
     });
     if (byPlayer) {
+      this.questSignal({ kind: 'defeat', target: c.def.id });
+      if (c.def.category === 'boss') this.events.push({ type: 'boss-defeated', creatureId: c.def.id });
       this.addXp(xp);
       for (const loot of rollLoot(this.content.lootTables.get(c.def.lootTable), this.rng)) {
         const drop = this.drops.spawn(loot.itemId, loot.quantity, c.combatant.position, this.time, this.content.map, this.rng);
         this.events.push({ type: 'drop-spawned', drop });
       }
     }
-    const zone = this.content.map.spawnZones.find((z) => z.id === c.zoneId);
-    if (zone) this.respawns.push({ zone, at: this.time + c.def.spawnRules.respawnSeconds });
   }
 
-  private processRespawns(): void {
+  /** Estado persistente de la simulación (sin exploración ni ajustes, que aporta la sesión). */
+  snapshot(): Omit<SavePayload, 'exploration' | 'settings'> {
+    const { character } = this.content;
+    return {
+      character: { id: character.id, name: character.name, professionId: character.professionId, people: null },
+      xp: this.character.xp,
+      player: { x: this.player.position.x, y: this.player.position.y, hp: this.player.hp, energy: this.player.energy },
+      inventory: this.character.inventory.toJSON(),
+      equipment: this.character.equipment.toJSON(),
+      quickSlots: [...this.character.quickSlots],
+      discoveries: this.discoveries.toJSON(),
+      quests: this.quests.toJSON(),
+      worldTime: this.time,
+      mapId: this.content.map.id,
+      bossesDefeated: [...this.population.defeatedBosses],
+    };
+  }
+
+  /**
+   * Restaura una partida guardada. Las referencias desconocidas (p. ej. un objeto eliminado del
+   * contenido) se descartan y se informan como advertencias, sin impedir la carga.
+   */
+  restore(p: SavePayload): string[] {
+    const warnings: string[] = [];
+    const { items, recipes } = this.content;
+    this.combat.time = p.worldTime;
+    this.character.restoreXp(p.xp);
+    const unknown = p.inventory.filter((st) => st !== null && !items.all.has(st.itemId));
+    if (unknown.length > 0) warnings.push(`${unknown.length} objetos desconocidos descartados`);
+    this.character.inventory.restore(p.inventory);
+    for (const slot of EQUIP_SLOTS) this.character.equipment.take(slot);
+    for (const [slot, id] of Object.entries(p.equipment)) {
+      if (items.all.get(id)?.equip?.slot === slot) this.character.equipment.put(id);
+      else warnings.push(`equipo "${id}" descartado`);
+    }
+    p.quickSlots.forEach((id, i) => this.character.assignQuickSlot(i, id !== null && items.all.has(id) ? id : null));
+    for (const id of p.discoveries) if (recipes.recipes.has(id)) this.discoveries.record(id);
+    this.quests.restore(p.quests);
+    for (const id of p.bossesDefeated) this.population.markBossDefeated(id);
+    this.syncPlayerStats();
+    const pos = { x: p.player.x, y: p.player.y };
+    const valid = !this.world.isBlocked(Math.floor(pos.x), Math.floor(pos.y));
+    if (!valid) warnings.push('posición inválida: se usa el punto de inicio');
+    this.player.reset(valid ? pos : this.content.map.spawn);
+    this.player.hp = Math.max(1, Math.min(p.player.hp, this.player.stats.life));
+    this.player.energy = Math.min(p.player.energy, this.player.stats.energy);
+    this.playerMotion = { position: this.player.position, facing: 's', moving: false };
+    return warnings;
+  }
+
+  private processPlayerRespawn(): void {
     if (this.playerRespawnAt !== null && this.time >= this.playerRespawnAt) {
       this.playerRespawnAt = null;
       this.player.reset(this.content.map.spawn);
       this.playerMotion = { position: this.player.position, facing: 's', moving: false };
       this.events.push({ type: 'player-respawned' });
     }
-    for (let i = this.respawns.length - 1; i >= 0; i--) {
-      const r = this.respawns[i];
-      if (!r || this.time < r.at) continue;
-      // Si no hay sitio válido (p. ej. el jugador está encima), se reintenta más tarde.
-      if (this.spawnCreature(r.zone)) this.respawns.splice(i, 1);
-      else r.at = this.time + 1;
-    }
-  }
-
-  private findSpawnPoint(zone: SpawnZone, def: CreatureDefinition): Vec2 | null {
-    for (let attempt = 0; attempt < 30; attempt++) {
-      const angle = this.rng() * Math.PI * 2;
-      const r = Math.sqrt(this.rng()) * zone.radius;
-      const p = { x: zone.center.x + Math.cos(angle) * r, y: zone.center.y + Math.sin(angle) * r };
-      if (collides(this.content.map, p, { halfSize: def.colliderHalfSize })) continue;
-      if (def.habitat.length > 0) {
-        const cx = Math.floor(p.x);
-        const cy = Math.floor(p.y);
-        const ground = this.content.map.tileAt('ground', cx, cy);
-        const detail = this.content.map.tileAt('detail', cx, cy);
-        if (!def.habitat.some((t) => t === ground || t === detail)) continue;
-      }
-      if (distance(p, this.player.position) < SPAWN_SAFE_DISTANCE) continue;
-      return p;
-    }
-    return null;
-  }
-
-  private spawnCreature(zone: SpawnZone): boolean {
-    const def = this.content.creatures.get(zone.creatureId);
-    if (!inHourRange(this.hour, def.spawnRules.activeHours)) return false;
-    const position = this.findSpawnPoint(zone, def);
-    if (!position) return false;
-    const id = `${zone.id}#${++this.serial}`;
-    const [minLevel, maxLevel] = def.levelRange;
-    const level = minLevel + Math.floor(this.rng() * (maxLevel - minLevel + 1));
-    const combatant = new Combatant({
-      id,
-      team: def.category === 'fauna' ? 'wild' : 'hostile',
-      position,
-      stats: statsAtLevel(def.stats, def.statsPerLevel, level),
-      level,
-      hurtboxRadius: def.hurtboxRadius,
-      colliderHalfSize: def.colliderHalfSize,
-      invulnerabilityOnHit: 0,
-      poise: def.poise,
-      energyRegen: 0,
-    });
-    this.combat.add(combatant);
-    this.creatures.set(id, {
-      id,
-      def,
-      zoneId: zone.id,
-      combatant,
-      brain: new CreatureBrain(position, def.behavior, new Navigator(this.content.map, def.colliderHalfSize)),
-      ability: def.abilities[0] ? this.content.abilities.get(def.abilities[0]) : null,
-      level,
-      motion: { position, facing: 's', moving: false },
-    });
-    this.events.push({ type: 'spawned', id, creatureId: def.id });
-    return true;
   }
 }
 
-/** Comprueba referencias cruzadas entre los archivos de contenido. */
-export function validateContentReferences(content: SimulationContent): string[] {
-  const problems: string[] = [];
-  const { abilities, statuses, creatures, profession, character, map, items, sets, lootTables } = content;
-  const needItem = (where: string, id: string) => {
-    if (!items.all.has(id)) problems.push(`${where}: objeto "${id}" inexistente`);
-  };
-  if (character.professionId !== profession.id)
-    problems.push(`El personaje usa la profesión "${character.professionId}" pero se cargó "${profession.id}"`);
-  for (const [slot, id] of Object.entries(profession.abilities)) {
-    if (!abilities.all.has(id)) problems.push(`Profesión ${profession.id}.${slot}: habilidad "${id}" inexistente`);
-  }
-  for (const a of abilities.all.values()) {
-    if (a.applyStatus && !statuses.all.has(a.applyStatus.statusId))
-      problems.push(`Habilidad ${a.id}: estado "${a.applyStatus.statusId}" inexistente`);
-  }
-  for (const c of creatures.all.values()) {
-    for (const id of c.abilities) if (!abilities.all.has(id)) problems.push(`Criatura ${c.id}: habilidad "${id}" inexistente`);
-    if (!lootTables.all.has(c.lootTable)) problems.push(`Criatura ${c.id}: tabla de botín "${c.lootTable}" inexistente`);
-  }
-  for (const t of lootTables.all.values()) for (const e of t.entries) needItem(`Botín ${t.id}`, e.itemId);
-  for (const set of sets.all.values()) {
-    for (const id of set.pieces) {
-      needItem(`Conjunto ${set.id}`, id);
-      const setId = items.all.get(id)?.equip?.setId;
-      if (items.all.has(id) && setId !== set.id) problems.push(`Conjunto ${set.id}: la pieza "${id}" declara setId "${String(setId)}"`);
-    }
-  }
-  for (const it of items.all.values()) {
-    const setId = it.equip?.setId;
-    if (setId && !sets.all.get(setId)?.pieces.includes(it.id)) problems.push(`Objeto ${it.id}: no figura en el conjunto "${setId}"`);
-  }
-  for (const it of character.startingItems) needItem('Personaje (startingItems)', it.itemId);
-  for (const id of character.startingEquipment) {
-    needItem('Personaje (startingEquipment)', id);
-    if (items.all.has(id) && !items.get(id).equip) problems.push(`Personaje: "${id}" no es equipable`);
-  }
-  for (const id of character.startingQuickSlots) if (id) needItem('Personaje (startingQuickSlots)', id);
-  const tiles = map.catalog.tiles;
-  for (const c of creatures.all.values()) {
-    for (const t of c.habitat) if (!tiles.has(t)) problems.push(`Criatura ${c.id}: hábitat "${t}" no es un tile conocido`);
-  }
-  for (const pl of content.plants.all.values()) {
-    needItem(`Planta ${pl.id}`, pl.itemId);
-    if (items.all.has(pl.itemId) && items.get(pl.itemId).category !== 'ingredient')
-      problems.push(`Planta ${pl.id}: el objeto "${pl.itemId}" debe ser un ingrediente`);
-    for (const t of pl.conditions.terrain) if (!tiles.has(t)) problems.push(`Planta ${pl.id}: terreno "${t}" no es un tile conocido`);
-    for (const other of pl.compatibilities) {
-      if (!content.plants.all.has(other)) problems.push(`Planta ${pl.id}: compatibilidad "${other}" inexistente`);
-    }
-  }
-  const { recipes, elements } = content;
-  needItem('Alquimia (resultado fallido)', recipes.config.failedResult.itemId);
-  for (const r of recipes.recipes.values()) {
-    for (const i of r.ingredients) needItem(`Receta ${r.id}`, i.itemId);
-    needItem(`Receta ${r.id} (resultado)`, r.result.itemId);
-  }
-  for (const e of elements.all.values()) {
-    if (e.onHit && !statuses.all.has(e.onHit.statusId)) problems.push(`Elemento ${e.id}: estado "${e.onHit.statusId}" inexistente`);
-  }
-  for (const it of items.all.values()) {
-    for (const ef of it.use?.effects ?? []) {
-      if (ef.kind === 'applyStatus' && !statuses.all.has(ef.statusId)) problems.push(`Objeto ${it.id}: estado "${ef.statusId}" inexistente`);
-      if (ef.kind === 'infusion' && !elements.all.has(ef.elementId)) problems.push(`Objeto ${it.id}: elemento "${ef.elementId}" inexistente`);
-    }
-  }
-  for (const z of map.gatherZones) {
-    if (!content.plants.all.has(z.plantId)) problems.push(`Mapa ${map.id}, zona ${z.id}: planta "${z.plantId}" inexistente`);
-  }
-  for (const z of map.spawnZones) {
-    if (!creatures.all.has(z.creatureId)) problems.push(`Mapa ${map.id}, zona ${z.id}: criatura "${z.creatureId}" inexistente`);
-  }
-  return problems;
-}
+export { validateContentReferences } from './contentValidation.ts';

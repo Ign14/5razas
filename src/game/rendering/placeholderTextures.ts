@@ -230,6 +230,22 @@ const CREATURE_PAINTERS: Readonly<Record<string, CreaturePainter>> = {
     ctx.fillRect(ox + 18, 15, 1, 1);
     ctx.fillRect(ox + 21, 15, 1, 1);
   },
+  // --- Jefe: Centinela de las Raíces (criatura original de fantasía; se dibuja escalado ×2) ---
+  'ph-creature-centinela': (ctx, ox, frame) => {
+    const sway = frame === 1 ? 1 : 0;
+    shadow(ctx, ox, 14);
+    ctx.fillStyle = '#4a3420';
+    for (const [x, w] of [[9, 3], [15, 3], [23, 3], [29, 3]] as const) ctx.fillRect(ox + x, 28, w, 9);
+    blob(ctx, ox + 20, 22 - sway, 11, '#5e4a2e', 61);
+    blob(ctx, ox + 20, 12 - sway, 6, '#6b5636', 62);
+    ctx.fillStyle = '#3f6b2a';
+    for (const [x, y] of [[10, 9], [28, 8], [14, 4], [25, 3]] as const) ctx.fillRect(ox + x, y - sway, 3, 4);
+    ctx.fillStyle = '#ffb347';
+    ctx.fillRect(ox + 16, 11 - sway, 3, 2);
+    ctx.fillRect(ox + 22, 11 - sway, 3, 2);
+    ctx.fillStyle = '#2e2214';
+    for (let i = 0; i < 4; i++) ctx.fillRect(ox + 13 + i * 4, 20 - sway, 1, 6);
+  },
   // --- Fauna real (siluetas provisionales) ---
   'ph-creature-conejo': (ctx, ox, frame) => {
     const hop = frame === 1 ? 2 : 0;
@@ -354,5 +370,50 @@ export function createPlantTextures(scene: Phaser.Scene, plants: Iterable<{ id: 
       for (const [x, y] of [[7, 13], [11, 9], [15, 14], [10, 15]] as const) ctx.fillRect(x, y, 4, 3);
     }
     canvas.refresh();
+  }
+}
+
+/** Obstáculo temporal (raíz) que hace brotar el jefe: 32 × 40 px, origen en la base. */
+export const OBSTACLE_TEXTURE = 'ph-obstacle-root';
+
+/** PNJ provisional: figura con capa, 32 × 48 px como el jugador. */
+export function createNarrativeTextures(scene: Phaser.Scene, npcAtlases: Iterable<string>): void {
+  if (!scene.textures.exists(OBSTACLE_TEXTURE)) {
+    const c = scene.textures.createCanvas(OBSTACLE_TEXTURE, 32, 40);
+    if (!c) throw new Error('No se pudo crear la textura de obstáculo');
+    const ctx = c.context;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(16, 36, 12, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    for (const [x, h, w, col] of [[8, 26, 5, '#5e4a2e'], [14, 34, 6, '#6b5636'], [21, 22, 5, '#4a3420']] as const) {
+      ctx.fillStyle = col;
+      ctx.fillRect(x, 37 - h, w, h);
+      ctx.fillStyle = '#3f6b2a';
+      ctx.fillRect(x - 1, 37 - h, 3, 3);
+    }
+    c.refresh();
+  }
+  for (const key of npcAtlases) {
+    if (scene.textures.exists(key)) continue;
+    const c = scene.textures.createCanvas(key, PLAYER_FRAME_W, PLAYER_FRAME_H);
+    if (!c) throw new Error(`No se pudo crear la textura ${key}`);
+    const ctx = c.context;
+    const px = (x: number, y: number, w: number, h: number, col: string) => {
+      ctx.fillStyle = col;
+      ctx.fillRect(x, y, w, h);
+    };
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(16, 44, 9, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    px(8, 18, 16, 26, '#3f6b4a');
+    px(10, 20, 12, 14, '#5a8a5e');
+    px(11, 7, 10, 11, '#c99a72');
+    px(10, 4, 12, 5, '#3f6b4a');
+    px(13, 11, 2, 2, '#1a1414');
+    px(17, 11, 2, 2, '#1a1414');
+    px(24, 10, 2, 34, '#7a5a3a');
+    c.refresh();
   }
 }

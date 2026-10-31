@@ -43,9 +43,14 @@ export const STARTING_SPAWN_ZONES = [
   { id: 'conejos-pradera-norte', creatureId: 'conejo-cola-algodon', x: 26.5, y: 6.5, radius: 4, count: 3 },
   { id: 'conejos-suroeste', creatureId: 'conejo-cola-algodon', x: 5.5, y: 40.5, radius: 3, count: 2 },
   { id: 'ciervos-oeste', creatureId: 'ciervo-cola-blanca', x: 7.5, y: 26.5, radius: 3, count: 2 },
-  { id: 'pavos-este', creatureId: 'pavo-silvestre', x: 56.5, y: 46.5, radius: 4, count: 3 },
+  { id: 'pavos-este', creatureId: 'pavo-silvestre', x: 54.5, y: 42.5, radius: 3, count: 3 },
   { id: 'pecaries-sureste', creatureId: 'pecari-de-collar', x: 45.5, y: 57.5, radius: 2.5, count: 2 },
+  // Jefe del MVP (Fase 6): claro del sureste.
+  { id: 'centinela-claro', creatureId: 'centinela-de-las-raices', x: 55.5, y: 53.5, radius: 1, count: 1 },
 ] as const;
+
+/** Personajes no jugadores (Fase 6). */
+export const STARTING_NPCS = [{ id: 'vigia-junto-al-sendero', npcId: 'vigia-del-sendero', x: 34.5, y: 30.5 }] as const;
 
 /** Zonas de recolección de plantas (Fase 4). */
 export const STARTING_GATHER_ZONES = [
@@ -166,7 +171,7 @@ export function generateStartingSector(opts: GeneratorOptions): TiledMapJson {
     tileheight: 32,
     tilewidth: 64,
     nextlayerid: 6,
-    nextobjectid: 2 + STARTING_SPAWN_ZONES.length + STARTING_GATHER_ZONES.length,
+    nextobjectid: 2 + STARTING_SPAWN_ZONES.length + STARTING_GATHER_ZONES.length + STARTING_NPCS.length,
     properties: [
       { name: 'mapId', type: 'string', value: opts.mapId },
       { name: 'name', type: 'string', value: opts.name },
@@ -252,6 +257,19 @@ export function generateStartingSector(opts: GeneratorOptions): TiledMapJson {
               { name: 'plantId', type: 'string', value: z.plantId },
               { name: 'radius', type: 'float', value: z.radius },
             ],
+          })),
+          ...STARTING_NPCS.map((n, i) => ({
+            id: 2 + STARTING_SPAWN_ZONES.length + STARTING_GATHER_ZONES.length + i,
+            name: n.id,
+            type: 'npc',
+            point: true,
+            rotation: 0,
+            visible: true,
+            width: 0,
+            height: 0,
+            x: n.x * 32,
+            y: n.y * 32,
+            properties: [{ name: 'npcId', type: 'string', value: n.npcId }],
           })),
         ],
       },

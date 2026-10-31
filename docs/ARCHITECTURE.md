@@ -1,6 +1,6 @@
 # Arquitectura — 5RAZAS
 
-Estado: Fases 0, 2, 3, 4 y 5 completas; Fase 1 con pendientes menores. Última actualización: 2026-10-31.
+Estado: vertical slice jugable de inicio a fin (Fases 0 y 2–6 completas; Fase 1 con pendientes menores). Última actualización: 2026-10-31.
 
 ## Stack verificado
 
@@ -32,11 +32,17 @@ src/
     character/ PlayerCharacter: progresión + inventario + equipo + consumibles → atributos finales.
     ecosystem/ Catálogo de plantas y PlantField (ubicación por zonas, recolección, regeneración).
     alchemy/   Elementos, libro de recetas (índice por combinación), propiedades combinadas, descubrimientos.
-    simulation/ WorldSimulation: jugador, criaturas, IA, combate, apariciones y búfer de entrada.
+    quests/    Catálogo de misiones y QuestLog (estados, señales, entrega, serialización).
+    narrative/ PNJ y diálogos por datos; selección de diálogo según el estado de las misiones.
+    persistence/ Formato de guardado versionado, suma de verificación, validación y migraciones.
+    simulation/ WorldSimulation (orquestación: jugador, combate, botín, interacción, misiones, guardado),
+               CreaturePopulation (aparición, horarios, IA, selección de habilidades, jefes) y
+               contentValidation (referencias cruzadas entre archivos).
     data/      Validación de JSON y contratos de configuración.
   data/        Contenido JSON: tiles, mapas Tiled, personaje, controles, combat/ (habilidades y
                estados), professions/, creatures/, items/ (objetos, conjuntos, botín), progression.json,
-               plants.json, world.json (ciclo de día y noche), alchemy/ (elementos y recetas).
+               plants.json, world.json (ciclo de día y noche), alchemy/ (elementos y recetas),
+               narrative/ (misiones, PNJ y diálogos).
   game/        Adaptadores Phaser.
     scenes/    Boot → Menu → Game (+ Hud en paralelo).
     rendering/ Texturas provisionales, profundidades, WorldRenderer (+ transparencia por oclusión),
@@ -47,6 +53,8 @@ src/
                ranuras rápidas Q/F, notificaciones laterales, textos de interfaz.
     scenes/InventoryScene  Inventario y equipamiento (pausa la simulación).
     scenes/AlchemyScene    Mortero, propiedades combinadas y libro de descubrimientos (pausa la simulación).
+    scenes/DialogueScene, JournalScene (J), PauseScene (Esc)  Pantallas superpuestas basadas en ui/panel.ts.
+    persistence/ IndexedDbSaveStorage (API nativa, sin dependencias).
     session.ts Partida en curso: WorldSimulation + exploración + suscripción a eventos (sin Phaser).
     content.ts Carga y validación del contenido.
   config/      Configuración del motor Phaser.
@@ -157,6 +165,32 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
 - **Preparaciones de alimento** (§8): Carne asada y Caldo vital, también como recetas.
 - HUD: línea de efectos activos bajo el marco del jugador (infusión y estados con tiempo restante).
 
+## Jefe, misiones y guardado (Fase 6)
+
+- **Centinela de las Raíces** (criatura original de fantasía, categoría `boss`) con `boss.phases` por datos:
+  1. *Despertar* (100 %): golpe en arco y embestida (ataques físicos y desplazamiento).
+  2. *Raíces del claro* (≤ 66 %): onda de área y **obstáculos temporales** de raíz alrededor del jugador.
+  3. *Furia del bosque* (≤ 33 %): +40 % velocidad, recuperaciones ×0,7, **Tempestad de raíces** (ataque combinado
+     de 4 impactos) tras la cual queda **Vulnerable** (+60 % daño recibido, 4,5 s).
+  Transición de 1,5 s invulnerable entre fases. Fuera de combate y herido, se reinicia (vida y fase 1). No
+  reaparece tras ser derrotado (`defeatedBosses`, persistido). Botín garantizado: Corazón de raíz (recurso raro) y
+  Amuleto del Centinela (equipo especial).
+- **Selección de habilidades** (`CreaturePopulation`): la primera habilidad lista de la fase cuyo alcance
+  (`abilityReach`) cubre la distancia al objetivo; sirve para todas las criaturas.
+- **Obstáculos dinámicos** (`DynamicObstacles`): capa de colisión sobre el mapa que usan movimiento, retroceso,
+  navegación A* y apariciones; nunca se colocan sobre una entidad.
+- **Misiones** (`narrative/quests.json`): objetivos `defeat`, `gather`, `discover` y `collect`; requisitos,
+  recompensas de XP y objetos. `QuestLog` recibe señales del mundo (no conoce los eventos de la simulación).
+- **PNJ y diálogos** (`npcs.json`, `dialogues.json`): reglas ordenadas eligen el diálogo según el estado de las
+  misiones; las opciones aceptan o entregan misiones (validadas en la simulación). PNJ ubicados como objetos
+  `npc` del mapa Tiled. La tecla E prioriza conversar sobre recolectar. Indicadores "!" y "?" sobre el PNJ.
+- **Guardado** (§15): `SavePayload` incluye identidad, profesión, XP, posición, vida/energía, inventario, equipo,
+  ranuras rápidas, recetas, misiones, tiempo del mundo, exploración (RLE), jefes derrotados y ajustes.
+  `SaveData` añade versión de esquema, fecha y suma de verificación FNV-1a. `loadSave` valida integridad y
+  estructura y aplica `SAVE_MIGRATIONS` en cadena; `WorldSimulation.restore` descarta referencias desconocidas con
+  advertencias. Guardado manual (menú de pausa), automático cada 60 s y en hitos (entrega de misión, jefe, nivel).
+  El menú principal ofrece "Continuar partida" si existe un guardado válido.
+
 ## Sistema de coordenadas
 
 - Celdas lógicas: la celda (i, j) ocupa [i, i+1) × [j, j+1). Las entidades usan posiciones continuas.
@@ -189,7 +223,8 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
 ## Gancho de depuración
 
 `window.__5RAZAS__` (solo lectura): `player()`, `exploredCells()`, `creatures()`, `cooldowns()`, `xp()`,
-`level()`, `inventory()`, `equipment()`, `drops()`, `paused()`, `hour()`, `plants()`, `discoveries()` y `mapId`.
+`level()`, `inventory()`, `equipment()`, `drops()`, `paused()`, `hour()`, `plants()`, `discoveries()`, `quests()`,
+`boss()`, `save()` y `mapId`.
 Lo usan las pruebas E2E.
 
 ## Limitaciones conocidas
@@ -202,7 +237,7 @@ Lo usan las pruebas E2E.
 - Las criaturas pueden atacar a través de un árbol si están dentro del alcance cuerpo a cuerpo.
 - La XP proviene de criaturas, caza y recolección; misiones y descubrimiento de regiones llegarán en la Fase 6.
 - Los animales que huyen no evitan activamente a los enemigos ni entre sí; la fauna no interactúa con otras criaturas.
-- `WorldSimulation` concentra la orquestación de apariciones, horarios e interacción (~560 líneas): candidata a
-  extraer un módulo `CreaturePopulation` antes de la Fase 6.
+- Una sola ranura de guardado; los ajustes de usuario se guardan vacíos hasta que exista una pantalla de opciones.
+- La narrativa del territorio es ficción provisional pendiente de revisión cultural (ver DECISIONS D-033).
 - El progreso del personaje no se guarda todavía (IndexedDB en la Fase 6); `toJSON` ya está preparado.
 - El set II (nivel 12) solo se obtiene por botín de baja probabilidad; el jefe y la fabricación lo darán más adelante.

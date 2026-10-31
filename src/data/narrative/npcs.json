@@ -1,0 +1,100 @@
+{
+  "$comment": "PROVISIONAL — ficción original del vertical slice, sin referencias a pueblos, ceremonias ni entidades reales. Pendiente de revisión humana antes de vincularla a un territorio cultural (CLAUDE.md, GAME_DESIGN §2).",
+  "npcs": [
+    {
+      "id": "vigia-del-sendero",
+      "name": "Vigía del Sendero",
+      "spriteAtlas": "ph-npc-vigia",
+      "dialogue": [
+        {
+          "when": {
+            "quest": "el-centinela",
+            "status": "turned-in"
+          },
+          "dialogueId": "vigia-epilogo"
+        },
+        {
+          "when": {
+            "quest": "el-centinela",
+            "status": "completed"
+          },
+          "dialogueId": "vigia-centinela-hecho"
+        },
+        {
+          "when": {
+            "quest": "el-centinela",
+            "status": "active"
+          },
+          "dialogueId": "vigia-centinela-activo"
+        },
+        {
+          "when": {
+            "quest": "el-centinela",
+            "status": "available"
+          },
+          "dialogueId": "vigia-centinela-oferta"
+        },
+        {
+          "when": {
+            "quest": "el-primer-elixir",
+            "status": "completed"
+          },
+          "dialogueId": "vigia-elixir-hecho"
+        },
+        {
+          "when": {
+            "quest": "el-primer-elixir",
+            "status": "active"
+          },
+          "dialogueId": "vigia-elixir-activo"
+        },
+        {
+          "when": {
+            "quest": "el-primer-elixir",
+            "status": "available"
+          },
+          "dialogueId": "vigia-elixir-oferta"
+        },
+        {
+          "when": {
+            "quest": "saber-de-las-plantas",
+            "status": "completed"
+          },
+          "dialogueId": "vigia-plantas-hecho"
+        },
+        {
+          "when": {
+            "quest": "saber-de-las-plantas",
+            "status": "active"
+          },
+          "dialogueId": "vigia-plantas-activo"
+        },
+        {
+          "when": {
+            "quest": "saber-de-las-plantas",
+            "status": "available"
+          },
+          "dialogueId": "vigia-plantas-oferta"
+        },
+        {
+          "when": {
+            "quest": "senales-en-el-bosque",
+            "status": "completed"
+          },
+          "dialogueId": "vigia-brotes-hecho"
+        },
+        {
+          "when": {
+            "quest": "senales-en-el-bosque",
+            "status": "active"
+          },
+          "dialogueId": "vigia-brotes-activo"
+        },
+        {
+          "when": null,
+          "dialogueId": "vigia-intro"
+        }
+      ]
+    }
+  ]
+}

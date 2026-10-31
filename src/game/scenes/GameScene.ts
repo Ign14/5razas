@@ -1,22 +1,31 @@
 import Phaser from 'phaser';
 import { predictArea } from '../../core/combat/combatWorld.ts';
-import { mapScreenBounds } from '../../core/math/iso.ts';
+import { mapScreenBounds, tileCenterToScreen } from '../../core/math/iso.ts';
+import type { SaveData } from '../../core/persistence/saveGame.ts';
 import { darknessAt } from '../../core/world/worldClock.ts';
 import { ACTION_SLOTS } from '../../core/professions/profession.ts';
 import { PLAYER_ID, type SimEvent } from '../../core/simulation/worldSimulation.ts';
 import type { GameContent } from '../content.ts';
 import { CreatureView } from '../entities/creatureView.ts';
 import { DropView } from '../entities/dropView.ts';
+import { NpcView } from '../entities/npcView.ts';
 import { PlantView } from '../entities/plantView.ts';
 import { PlayerView } from '../entities/playerView.ts';
 import { PlayerInput, parseBindings } from '../input/playerInput.ts';
 import { CombatEffects } from '../rendering/combatEffects.ts';
-import { OVERLAY_DEPTH } from '../rendering/depth.ts';
+import { OVERLAY_DEPTH, sortedDepth } from '../rendering/depth.ts';
+import { OBSTACLE_TEXTURE } from '../rendering/placeholderTextures.ts';
+import { IndexedDbSaveStorage, SAVE_SLOT } from '../persistence/indexedDbStorage.ts';
 import { WorldRenderer } from '../rendering/worldRenderer.ts';
 import { GameSession } from '../session.ts';
-import type { AlchemyScene } from './AlchemyScene.ts';
-import type { InventoryScene } from './InventoryScene.ts';
 import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
+
+/** Pantallas superpuestas: solo una abierta a la vez; todas pausan la simulación. */
+const OVERLAYS = [SceneKeys.Inventory, SceneKeys.Alchemy, SceneKeys.Journal, SceneKeys.Pause, SceneKeys.Dialogue] as const;
+type OverlayKey = (typeof OVERLAYS)[number];
+interface Closable {
+  close(): void;
+}
 
 /** Escena de exploración y combate: orquesta entrada → simulación (core) → representación. */
 export class GameScene extends Phaser.Scene {
@@ -28,21 +37,35 @@ export class GameScene extends Phaser.Scene {
   private readonly creatureViews = new Map<string, CreatureView>();
   private readonly dropViews = new Map<string, DropView>();
   private readonly plantViews = new Map<string, PlantView>();
+  private readonly obstacleViews = new Map<string, Phaser.GameObjects.Image>();
+  private npcViews: NpcView[] = [];
   private night!: Phaser.GameObjects.Rectangle;
   private content!: GameContent;
+  private save: SaveData | null = null;
 
   constructor() {
     super(SceneKeys.Game);
+  }
+
+  /** `save`: partida a continuar (null = partida nueva). */
+  init(data: { save?: SaveData | null }): void {
+    this.save = data.save ?? null;
   }
 
   create(): void {
     const content = this.registry.get(REGISTRY_CONTENT) as GameContent;
     this.content = content;
     const map = content.map;
-    this.session = new GameSession(content);
+    this.session = new GameSession(content, { save: this.save, storage: new IndexedDbSaveStorage(), slot: SAVE_SLOT });
+    if (this.session.loadWarnings.length > 0) console.warn('Advertencias al cargar:', this.session.loadWarnings);
     this.creatureViews.clear();
     this.dropViews.clear();
     this.plantViews.clear();
+    this.obstacleViews.clear();
+    this.npcViews = map.npcs.flatMap((n) => {
+      const def = content.narrative.npcs.get(n.npcId);
+      return def ? [new NpcView(this, n, def, map.iso)] : [];
+    });
 
     this.world = new WorldRenderer(this, map);
     this.effects = new CombatEffects(this, map.iso);
@@ -68,8 +91,7 @@ export class GameScene extends Phaser.Scene {
     exposeDebug(this.session);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scene.stop(SceneKeys.Hud);
-      this.scene.stop(SceneKeys.Inventory);
-      this.scene.stop(SceneKeys.Alchemy);
+      for (const key of OVERLAYS) this.scene.stop(key);
     });
   }
 
@@ -77,8 +99,9 @@ export class GameScene extends Phaser.Scene {
     const sim = this.session.sim;
     // La lectura se hace siempre, para consumir pulsaciones y clics hechos sobre el inventario.
     const cmd = this.playerInput.read(sim.player.position);
-    if (this.playerInput.inventoryPressed()) this.toggleOverlay(SceneKeys.Inventory);
-    if (this.playerInput.alchemyPressed()) this.toggleOverlay(SceneKeys.Alchemy);
+    const overlay = this.playerInput.overlayPressed();
+    if (overlay === 'menu') this.escape();
+    else if (overlay) this.toggleOverlay(({ inventory: SceneKeys.Inventory, alchemy: SceneKeys.Alchemy, journal: SceneKeys.Journal } as const)[overlay]);
     const events = this.session.paused ? this.session.flush() : this.session.update(deltaMs / 1000, cmd);
     for (const e of events) this.handleEvent(e);
 
@@ -94,18 +117,34 @@ export class GameScene extends Phaser.Scene {
       const c = sim.creatures.get(id);
       if (c) view.sync(c, sim.time);
     }
+    for (const npc of this.npcViews) npc.sync(sim.quests);
   }
 
-  /** Abre o cierra una pantalla superpuesta (inventario o alquimia); solo una a la vez. */
-  private toggleOverlay(key: typeof SceneKeys.Inventory | typeof SceneKeys.Alchemy): void {
-    const other = key === SceneKeys.Inventory ? SceneKeys.Alchemy : SceneKeys.Inventory;
-    if (this.scene.isActive(key)) {
-      (this.scene.get(key) as InventoryScene | AlchemyScene).close();
+  private activeOverlay(): OverlayKey | null {
+    return OVERLAYS.find((k) => this.scene.isActive(k)) ?? null;
+  }
+
+  private closeOverlay(key: OverlayKey): void {
+    (this.scene.get(key) as unknown as Closable).close();
+  }
+
+  /** Esc: cierra la pantalla abierta o, si no hay ninguna, abre el menú de pausa. */
+  private escape(): void {
+    const open = this.activeOverlay();
+    if (open) this.closeOverlay(open);
+    else this.toggleOverlay(SceneKeys.Pause);
+  }
+
+  /** Abre o cierra una pantalla superpuesta; solo una a la vez. */
+  private toggleOverlay(key: OverlayKey, data: Record<string, unknown> = {}): void {
+    const open = this.activeOverlay();
+    if (open === key) {
+      this.closeOverlay(key);
       return;
     }
-    if (!this.session.sim.player.alive) return;
-    if (this.scene.isActive(other)) (this.scene.get(other) as InventoryScene | AlchemyScene).close();
-    this.scene.launch(key, { session: this.session });
+    if (!this.session.sim.player.alive && key !== SceneKeys.Pause) return;
+    if (open) this.closeOverlay(open);
+    this.scene.launch(key, { session: this.session, ...data });
   }
 
   private handleEvent(e: SimEvent): void {
@@ -172,6 +211,26 @@ export class GameScene extends Phaser.Scene {
         this.dropViews.get(e.id)?.remove(e.type === 'drop-collected');
         this.dropViews.delete(e.id);
         break;
+      case 'dialogue':
+        this.toggleOverlay(SceneKeys.Dialogue, { dialogueId: e.dialogueId });
+        break;
+      case 'obstacle-spawned': {
+        const p = tileCenterToScreen(e.obstacle.x, e.obstacle.y, this.session.map.iso);
+        const img = this.add.image(p.x, p.y + 8, OBSTACLE_TEXTURE).setOrigin(0.5, 1).setDepth(sortedDepth(p.y)).setScale(1, 0.2);
+        this.tweens.add({ targets: img, scaleY: 1, duration: 250, ease: 'Back.easeOut' });
+        this.obstacleViews.set(`${e.obstacle.x},${e.obstacle.y}`, img);
+        break;
+      }
+      case 'obstacle-removed': {
+        const key = `${e.obstacle.x},${e.obstacle.y}`;
+        const img = this.obstacleViews.get(key);
+        this.obstacleViews.delete(key);
+        if (img) this.tweens.add({ targets: img, alpha: 0, scaleY: 0.2, duration: 250, onComplete: () => { img.destroy(); } });
+        break;
+      }
+      case 'boss-phase':
+        this.cameras.main.shake(400, 0.008);
+        break;
       case 'level-up':
         this.effects.floatText(this.session.sim.player.position, `¡Nivel ${e.level}!`, '#ffd84a', true);
         this.cameras.main.flash(250, 255, 230, 140);
@@ -215,5 +274,11 @@ function exposeDebug(session: GameSession): void {
     plants: () => [...sim.plants.all()].map((n) => ({ id: n.id, plantId: n.plantId, x: n.position.x, y: n.position.y, ready: sim.plants.isReady(n, sim.time, sim.hour) })),
     drops: () => [...sim.drops.all()].map((d) => ({ itemId: d.itemId, x: d.position.x, y: d.position.y })),
     mapId: session.map.id,
+    quests: () => sim.quests.toJSON(),
+    boss: () => {
+      const b = [...sim.creatures.values()].find((c) => c.boss !== null);
+      return b ? { id: b.id, x: b.combatant.position.x, y: b.combatant.position.y, hp: b.combatant.hp, phase: b.boss?.phase ?? 0 } : null;
+    },
+    save: () => session.save('manual'),
   };
 }

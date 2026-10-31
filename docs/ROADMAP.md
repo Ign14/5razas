@@ -10,5 +10,5 @@ Fuente: `docs/GAME_DESIGN.md` §16. Estado al 2026-10-31.
 | 3 — Progresión | Experiencia, niveles, inventario, equipamiento, botín | ✅ Completa |
 | 4 — Ecosistema | Fauna, plantas, recolección, spawns | ✅ Completa |
 | 5 — Alquimia | Motor de recetas por datos, descubrimientos, modificadores | ✅ Completa |
-| 6 — Jefe y narrativa | Centinela de las Raíces, misiones, diálogos, guardado completo (IndexedDB) | ⬜ |
+| 6 — Jefe y narrativa | Centinela de las Raíces, misiones, diálogos, guardado completo (IndexedDB) | ✅ Completa |
 | 7 — Expansión | Solo tras validar el prototipo | ⬜ |
