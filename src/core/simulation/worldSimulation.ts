@@ -1,11 +1,19 @@
 import { CreatureBrain } from '../ai/creatureBrain.ts';
+import {
+  combinedProperties,
+  DiscoveryBook,
+  totalUnits,
+  type IngredientStack,
+  type RecipeBook,
+} from '../alchemy/alchemy.ts';
+import type { ElementCatalog } from '../alchemy/elements.ts';
 import { PlayerCharacter, type ItemFailure, type ItemResult } from '../character/playerCharacter.ts';
 import { Navigator } from '../ai/navigator.ts';
 import type { AbilityCatalog, AbilityDefinition } from '../combat/abilities.ts';
 import { Combatant } from '../combat/combatant.ts';
 import { CombatWorld, type CombatEvent, type UseFailure } from '../combat/combatWorld.ts';
 import type { StatusCatalog } from '../combat/statusEffects.ts';
-import { PlantField, type HarvestFailure, type PlantCatalog, type PlantNode } from '../ecosystem/plants.ts';
+import { PlantField, type AlchemyElement, type HarvestFailure, type PlantCatalog, type PlantNode } from '../ecosystem/plants.ts';
 import type { CharacterConfig } from '../data/characterConfig.ts';
 import type { CreatureCatalog, CreatureDefinition } from '../creatures/creatureCatalog.ts';
 import { cellToScreen, screenDirToCellDir } from '../math/iso.ts';
@@ -14,7 +22,7 @@ import { distance, length, type Vec2 } from '../math/vector.ts';
 import { MAX_DT_SECONDS, stepMotion, stepMotionCells, type MotionState } from '../movement/characterMotion.ts';
 import { directionFromScreenVector } from '../movement/direction.ts';
 import type { EquipmentSetCatalog } from '../items/equipmentSets.ts';
-import type { EquipSlot, ItemCatalog } from '../items/itemCatalog.ts';
+import type { EquipSlot, ItemCatalog, UseEffect } from '../items/itemCatalog.ts';
 import { rollLoot, type LootTableCatalog } from '../items/lootTables.ts';
 import { DropField, type WorldDrop } from '../items/worldDrops.ts';
 import type { ActionSlot, ProfessionDefinition } from '../professions/profession.ts';
@@ -36,7 +44,23 @@ export interface SimulationContent {
   readonly progression: ProgressionConfig;
   readonly plants: PlantCatalog;
   readonly clock: ClockConfig;
+  readonly elements: ElementCatalog;
+  readonly recipes: RecipeBook;
 }
+
+export type AlchemyFailure = 'too-few' | 'too-many' | 'missing-ingredients' | 'invalid-ingredient' | 'dead';
+export type AlchemyResult =
+  | {
+      readonly ok: true;
+      /** null si la combinación no corresponde a ninguna receta (resultado menor). */
+      readonly recipeId: string | null;
+      readonly itemId: string;
+      readonly quantity: number;
+      readonly firstDiscovery: boolean;
+      /** Propiedades combinadas de los ingredientes, como pista para experimentar. */
+      readonly properties: readonly { readonly element: AlchemyElement; readonly potency: number }[];
+    }
+  | { readonly ok: false; readonly reason: AlchemyFailure };
 
 /** Órdenes del jugador para un frame, ya traducidas desde el dispositivo de entrada. */
 export interface PlayerCommand {
@@ -74,7 +98,9 @@ export type SimEvent =
   | { readonly type: 'equipment-changed' }
   | { readonly type: 'despawned'; readonly id: string }
   | { readonly type: 'harvested'; readonly nodeId: string; readonly plantId: string; readonly itemId: string; readonly quantity: number }
-  | { readonly type: 'interact-failed'; readonly reason: HarvestFailure | 'nothing' };
+  | { readonly type: 'interact-failed'; readonly reason: HarvestFailure | 'nothing' }
+  | { readonly type: 'alchemy-result'; readonly result: AlchemyResult & { readonly ok: true } }
+  | { readonly type: 'infusion'; readonly elementId: string; readonly until: number };
 
 export interface CreatureInstance {
   readonly id: string;
@@ -115,6 +141,7 @@ export class WorldSimulation {
   readonly character: PlayerCharacter;
   readonly drops = new DropField();
   readonly plants: PlantField;
+  readonly discoveries = new DiscoveryBook();
   private readonly content: SimulationContent;
   private readonly rng: Rng;
   private readonly respawns: { zone: SpawnZone; at: number }[] = [];
@@ -129,7 +156,7 @@ export class WorldSimulation {
   constructor(content: SimulationContent, seed = 1) {
     this.content = content;
     this.rng = createRng(seed);
-    this.combat = new CombatWorld(content.map, content.statuses, this.rng);
+    this.combat = new CombatWorld(content.map, content.statuses, this.rng, content.elements);
     const { profession, character, map } = content;
     this.character = new PlayerCharacter({
       profession,
@@ -177,7 +204,7 @@ export class WorldSimulation {
   /** Planta al alcance del jugador y si puede recolectarse ahora (para el aviso de interacción). */
   interactionTarget(): { node: PlantNode; ready: boolean } | null {
     if (!this.player.alive) return null;
-    const node = this.plants.nearest(this.player.position, INTERACT_RADIUS);
+    const node = this.plants.nearest(this.player.position, INTERACT_RADIUS, this.time, this.hour);
     return node ? { node, ready: this.plants.isReady(node, this.time, this.hour) } : null;
   }
 
@@ -217,6 +244,58 @@ export class WorldSimulation {
     }
   }
 
+  private applyItemEffect(e: UseEffect): void {
+    if (e.kind === 'applyStatus') {
+      this.combat.applyStatusTo(PLAYER_ID, e.statusId, PLAYER_ID);
+    } else if (e.kind === 'infusion') {
+      // Solo una infusión activa: la nueva reemplaza a la anterior.
+      this.player.infusion = { elementId: e.elementId, until: this.time + e.duration };
+      this.events.push({ type: 'infusion', elementId: e.elementId, until: this.player.infusion.until });
+    }
+  }
+
+  /**
+   * Combina ingredientes del inventario (GAME_DESIGN §10.5). Una combinación conocida produce su
+   * resultado y, la primera vez, se registra en el libro de descubrimientos. Una combinación inválida
+   * consume los ingredientes y produce el resultado menor configurado.
+   */
+  experiment(ingredients: readonly IngredientStack[]): AlchemyResult {
+    if (!this.player.alive) return { ok: false, reason: 'dead' };
+    const units = totalUnits(ingredients);
+    if (units < 2) return { ok: false, reason: 'too-few' };
+    if (units > this.content.recipes.config.maxUnits) return { ok: false, reason: 'too-many' };
+    const inv = this.character.inventory;
+    const needed = new Map<string, number>();
+    for (const i of ingredients) needed.set(i.itemId, (needed.get(i.itemId) ?? 0) + i.quantity);
+    for (const [itemId, qty] of needed) {
+      const category = this.content.items.all.get(itemId)?.category;
+      if (category !== 'ingredient' && category !== 'material') return { ok: false, reason: 'invalid-ingredient' };
+      if (inv.count(itemId) < qty) return { ok: false, reason: 'missing-ingredients' };
+    }
+    for (const [itemId, qty] of needed) inv.remove(itemId, qty);
+
+    const recipe = this.content.recipes.find(ingredients);
+    const produced = recipe?.result ?? this.content.recipes.config.failedResult;
+    const left = inv.add(produced.itemId, produced.quantity);
+    if (left > 0) {
+      const drop = this.drops.spawn(produced.itemId, left, this.player.position, this.time, this.content.map, this.rng);
+      this.events.push({ type: 'drop-spawned', drop });
+      this.events.push({ type: 'inventory-full', itemId: produced.itemId });
+    }
+    const firstDiscovery = recipe ? this.discoveries.record(recipe.id) : false;
+    const result = {
+      ok: true as const,
+      recipeId: recipe?.id ?? null,
+      itemId: produced.itemId,
+      quantity: produced.quantity,
+      firstDiscovery,
+      properties: combinedProperties(ingredients, this.content.plants),
+    };
+    this.events.push({ type: 'alchemy-result', result });
+    if (recipe && firstDiscovery) this.addXp(recipe.discoveryXp);
+    return result;
+  }
+
   // --- Acciones de inventario (llamadas desde la interfaz) ---
 
   equip(inventoryIndex: number): ItemResult {
@@ -243,7 +322,7 @@ export class WorldSimulation {
   }
 
   useItem(itemId: string): ItemResult {
-    const r = this.character.useItem(itemId, this.player, this.time);
+    const r = this.character.useItem(itemId, this.player, this.time, (e) => { this.applyItemEffect(e); });
     this.events.push(r.ok ? { type: 'item-used', itemId } : { type: 'item-failed', itemId, reason: r.reason });
     return r;
   }
@@ -326,7 +405,7 @@ export class WorldSimulation {
 
   /** Recolecta la planta más cercana; el resultado va al inventario o, si no cabe, al suelo. */
   private interact(): void {
-    const node = this.plants.nearest(this.player.position, INTERACT_RADIUS);
+    const node = this.plants.nearest(this.player.position, INTERACT_RADIUS, this.time, this.hour);
     if (!node) {
       this.events.push({ type: 'interact-failed', reason: 'nothing' });
       return;
@@ -544,6 +623,21 @@ export function validateContentReferences(content: SimulationContent): string[] 
     for (const t of pl.conditions.terrain) if (!tiles.has(t)) problems.push(`Planta ${pl.id}: terreno "${t}" no es un tile conocido`);
     for (const other of pl.compatibilities) {
       if (!content.plants.all.has(other)) problems.push(`Planta ${pl.id}: compatibilidad "${other}" inexistente`);
+    }
+  }
+  const { recipes, elements } = content;
+  needItem('Alquimia (resultado fallido)', recipes.config.failedResult.itemId);
+  for (const r of recipes.recipes.values()) {
+    for (const i of r.ingredients) needItem(`Receta ${r.id}`, i.itemId);
+    needItem(`Receta ${r.id} (resultado)`, r.result.itemId);
+  }
+  for (const e of elements.all.values()) {
+    if (e.onHit && !statuses.all.has(e.onHit.statusId)) problems.push(`Elemento ${e.id}: estado "${e.onHit.statusId}" inexistente`);
+  }
+  for (const it of items.all.values()) {
+    for (const ef of it.use?.effects ?? []) {
+      if (ef.kind === 'applyStatus' && !statuses.all.has(ef.statusId)) problems.push(`Objeto ${it.id}: estado "${ef.statusId}" inexistente`);
+      if (ef.kind === 'infusion' && !elements.all.has(ef.elementId)) problems.push(`Objeto ${it.id}: elemento "${ef.elementId}" inexistente`);
     }
   }
   for (const z of map.gatherZones) {

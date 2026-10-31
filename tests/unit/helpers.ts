@@ -4,6 +4,8 @@ import type { Stats } from '../../src/core/combat/stats.ts';
 import { parseStatusCatalog } from '../../src/core/combat/statusEffects.ts';
 import { parseCharacterConfig } from '../../src/core/data/characterConfig.ts';
 import { parseCreatureCatalog } from '../../src/core/creatures/creatureCatalog.ts';
+import { parseRecipeBook } from '../../src/core/alchemy/alchemy.ts';
+import { parseElementCatalog } from '../../src/core/alchemy/elements.ts';
 import { parsePlantCatalog } from '../../src/core/ecosystem/plants.ts';
 import { parseEquipmentSets } from '../../src/core/items/equipmentSets.ts';
 import { parseItemCatalog } from '../../src/core/items/itemCatalog.ts';
@@ -15,6 +17,8 @@ import type { CollisionMap } from '../../src/core/world/collision.ts';
 import { parseTileCatalog } from '../../src/core/world/tileCatalog.ts';
 import { parseTiledMap } from '../../src/core/world/tiledLoader.ts';
 import { parseClockConfig } from '../../src/core/world/worldClock.ts';
+import recipesJson from '../../src/data/alchemy/recipes.json';
+import elementsJson from '../../src/data/alchemy/elements.json';
 import playerJson from '../../src/data/characters/provisional-player.json';
 import abilitiesJson from '../../src/data/combat/abilities.json';
 import statusesJson from '../../src/data/combat/statuses.json';
@@ -45,6 +49,8 @@ export function loadTestContent(): SimulationContent {
     progression: parseProgression(progressionJson, 'progression'),
     plants: parsePlantCatalog(plantsJson, 'plants'),
     clock: parseClockConfig(worldJson, 'world'),
+    elements: parseElementCatalog(elementsJson, 'elements'),
+    recipes: parseRecipeBook(recipesJson, 'recipes'),
   };
 }
 

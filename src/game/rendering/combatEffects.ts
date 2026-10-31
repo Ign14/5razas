@@ -61,8 +61,8 @@ export class CombatEffects {
   }
 
   /** Dibuja un área; `telegraph` la muestra como aviso durante `duration` segundos. */
-  showArea(area: HitArea, vfx: string, duration: number, telegraph: boolean): void {
-    const color = VFX_COLORS[vfx] ?? DEFAULT_COLOR;
+  showArea(area: HitArea, vfx: string, duration: number, telegraph: boolean, colorOverride: string | null = null): void {
+    const color = colorOverride ? parseInt(colorOverride.slice(1), 16) : (VFX_COLORS[vfx] ?? DEFAULT_COLOR);
     const g = this.scene.add.graphics().setDepth(telegraph ? 3 : OVERLAY_DEPTH - 2);
     const pts = areaOutline(area, this.iso);
     g.fillStyle(color, telegraph ? 0.18 : 0.35).fillPoints(pts, true);

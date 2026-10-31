@@ -37,6 +37,7 @@ export class HudScene extends Phaser.Scene {
   private hint!: Phaser.GameObjects.Text;
   private notice!: Phaser.GameObjects.Text;
   private prompt!: Phaser.GameObjects.Text;
+  private effectsLine!: Phaser.GameObjects.Text;
   private banner!: Phaser.GameObjects.Text;
   private deathOverlay!: Phaser.GameObjects.Rectangle;
   private noticeUntil = 0;
@@ -67,12 +68,13 @@ export class HudScene extends Phaser.Scene {
     this.feed = new NotificationFeed(this);
     this.sectorLabel = this.add.text(0, 0, '', { ...TEXT, fontSize: '13px', align: 'right' }).setOrigin(1, 0);
     this.hint = this.add
-      .text(0, 0, 'WASD moverse · Clic atacar · 1 2 3 poderes · R final · Espacio evadir · Q F consumibles · E recolectar', {
+      .text(0, 0, 'WASD moverse · Clic atacar · 1 2 3 poderes · R final · Espacio evadir · Q F consumibles · E recolectar · I inventario · K alquimia', {
         ...TEXT,
         fontSize: '11px',
         color: '#a9a596',
       })
       .setOrigin(0.5, 1);
+    this.effectsLine = this.add.text(MARGIN + 2, MARGIN + 94, '', { ...TEXT, fontSize: '11px' });
     this.prompt = this.add
       .text(0, 0, '', { ...TEXT, fontSize: '14px', color: '#f2efe0', backgroundColor: '#0b0d12cc', padding: { x: 8, y: 4 } })
       .setOrigin(0.5, 1)
@@ -136,6 +138,20 @@ export class HudScene extends Phaser.Scene {
       case 'item-used':
         this.feed.push(`Usaste ${this.itemName(e.itemId)}`, '#c9c3b0', now);
         break;
+      case 'alchemy-result': {
+        const name = this.itemName(e.result.itemId);
+        if (e.result.firstDiscovery) {
+          this.banner.setText(`¡Receta descubierta!\n${name}`);
+          this.bannerUntil = now + 3;
+        }
+        this.feed.push(`+${e.result.quantity} ${name}`, e.result.recipeId ? '#9fe870' : '#c9c3b0', now);
+        break;
+      }
+      case 'infusion': {
+        const el = this.content.elements.get(e.elementId);
+        this.feed.push(`Ataques con ${el.name}`, el.color, now);
+        break;
+      }
       case 'harvested': {
         this.feed.push(`+${e.quantity} ${this.itemName(e.itemId)}`, '#9fe870', now);
         break;
@@ -187,10 +203,23 @@ export class HudScene extends Phaser.Scene {
     const { position } = this.session.player;
     const day = dayAt(this.content.clock, now);
     this.sectorLabel.setText(
-      `${this.session.map.name}  (${Math.floor(position.x)}, ${Math.floor(position.y)})
-Día ${day} · ${formatHour(sim.hour)}`,
+      `${this.session.map.name}  (${Math.floor(position.x)}, ${Math.floor(position.y)})\nDía ${day} · ${formatHour(sim.hour)}`,
     );
     this.updatePrompt();
+    this.updateEffects();
+  }
+
+  /** Infusión y estados activos del jugador, con su tiempo restante. */
+  private updateEffects(): void {
+    const sim = this.session.sim;
+    const parts: string[] = [];
+    const element = sim.player.activeElement(sim.time);
+    if (element && sim.player.infusion) {
+      parts.push(`✦ ${this.content.elements.get(element).name} ${Math.ceil(sim.player.infusion.until - sim.time)} s`);
+    }
+    for (const s of sim.player.statuses.values()) parts.push(`${s.def.harmful ? '▼' : '▲'} ${s.def.name} ${Math.ceil(s.remaining)} s`);
+    this.effectsLine.setText(parts.join('   '));
+    this.effectsLine.setColor(element ? this.content.elements.get(element).color : '#e6e1cf');
   }
 
   /** Aviso de interacción con la planta al alcance (GAME_DESIGN §12, tecla E). */

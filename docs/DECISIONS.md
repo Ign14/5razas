@@ -98,3 +98,24 @@ por datos. Evita campos sin sentido y permite al compilador comprobar cada caso 
 ## D-024 — Recolección instantánea con bloqueo breve
 Pulsar E recolecta al momento y bloquea al personaje 0,4 s. Una animación de canalización interrumpible puede
 añadirse más adelante sin cambiar las reglas.
+
+## D-025 — Índice por clave canónica para las recetas (2026-10-31)
+Cumple "el sistema no podrá depender de condicionales específicos por combinación" (§10.4): agregar una receta es
+agregar un registro. El orden de los ingredientes no importa; la validación impide dos recetas con la misma
+combinación.
+
+## D-026 — Las combinaciones inválidas dan un resultado menor y una pista
+§10.5 permite consumir materiales sin bloquear el progreso. Se entrega una Mezcla turbia (cura 10) y se informa el
+elemento predominante, para orientar la experimentación sin revelar recetas.
+
+## D-027 — Infusión elemental como estado del combatiente, no como modificación de las habilidades
+Las definiciones de habilidades no cambian; `CombatWorld` consulta la infusión activa y `compatibleModifiers` en cada
+impacto. Así la alquimia "altera realmente el combate" sin duplicar habilidades por elemento.
+
+## D-028 — Electricidad y Viento con recetas propias
+El diseño lista cinco elementos (§10.3) pero solo da ejemplos para tres. Se añadieron Elixir de chispa (Hongo Azul +
+2 Polvo de ceniza) y Elixir de vendaval (2 Semillas del Viento + Pluma), ambos ficticios y ajustables por datos.
+
+## D-029 — La interacción prefiere plantas maduras
+Con dos plantas al alcance, se apunta a la madura más cercana; antes, una planta recién recolectada bloqueaba la de
+al lado (detectado en la prueba visual).

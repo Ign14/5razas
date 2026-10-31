@@ -1,3 +1,4 @@
+import type { ElementCatalog } from '../alchemy/elements.ts';
 import type { Rng } from '../math/random.ts';
 import { add, length, normalize, scale, sub, type Vec2 } from '../math/vector.ts';
 import { moveWithCollisions, type CollisionMap } from '../world/collision.ts';
@@ -12,8 +13,9 @@ export const KNOCKBACK_DURATION = 0.15;
 
 export type CombatEvent =
   | { readonly type: 'ability'; readonly casterId: string; readonly ability: AbilityDefinition; readonly origin: Vec2; readonly aim: Vec2 }
-  | { readonly type: 'hit'; readonly casterId: string; readonly ability: AbilityDefinition; readonly area: HitArea }
-  | { readonly type: 'damage'; readonly targetId: string; readonly sourceId: string; readonly amount: number; readonly crit: boolean; readonly statusId: string | null }
+  | { readonly type: 'hit'; readonly casterId: string; readonly ability: AbilityDefinition; readonly area: HitArea; readonly element: string | null }
+  | { readonly type: 'damage'; readonly targetId: string; readonly sourceId: string; readonly amount: number; readonly crit: boolean; readonly statusId: string | null; readonly element?: string | null }
+  | { readonly type: 'heal'; readonly targetId: string; readonly amount: number; readonly statusId: string }
   | { readonly type: 'evade'; readonly targetId: string; readonly sourceId: string }
   | { readonly type: 'status'; readonly targetId: string; readonly statusId: string }
   | { readonly type: 'interrupted'; readonly targetId: string }
@@ -81,11 +83,21 @@ export class CombatWorld {
   private readonly map: CollisionMap;
   private readonly statuses: StatusCatalog;
   private readonly rng: Rng;
+  private readonly elements: ElementCatalog | null;
 
-  constructor(map: CollisionMap, statuses: StatusCatalog, rng: Rng) {
+  constructor(map: CollisionMap, statuses: StatusCatalog, rng: Rng, elements: ElementCatalog | null = null) {
     this.map = map;
     this.statuses = statuses;
     this.rng = rng;
+    this.elements = elements;
+  }
+
+  /** Aplica un estado desde fuera del combate (p. ej. un consumible). */
+  applyStatusTo(targetId: string, statusId: string, sourceId: string): boolean {
+    const target = this.combatants.get(targetId);
+    if (!target?.alive) return false;
+    this.applyStatus(target, statusId, sourceId);
+    return true;
   }
 
   add(c: Combatant): void {
@@ -201,6 +213,15 @@ export class CombatWorld {
           this.events.push({ type: 'damage', targetId: c.id, sourceId: s.sourceId, amount, crit: false, statusId: id });
           this.applyDamage(c, amount, s.sourceId);
         }
+      } else if (s.def.kind === 'healOverTime') {
+        s.untilTick -= dt;
+        while (s.untilTick <= 0 && c.alive) {
+          s.untilTick += s.def.tickInterval;
+          const amount = Math.min(Math.round(s.def.magnitude), Math.ceil(c.stats.life - c.hp));
+          if (amount <= 0) continue;
+          c.hp += amount;
+          this.events.push({ type: 'heal', targetId: c.id, amount, statusId: id });
+        }
       }
       if (s.remaining <= 0) c.statuses.delete(id);
     }
@@ -219,7 +240,10 @@ export class CombatWorld {
     if (!caster?.alive) return;
     const area = resolveArea(hit.ability, caster.position, hit.aim, hit.origin);
     if (!area) return;
-    this.events.push({ type: 'hit', casterId: caster.id, ability: hit.ability, area });
+    // Infusión alquímica: solo las habilidades compatibles incorporan el elemento activo.
+    const elementId = hit.ability.compatibleModifiers.includes('element') ? caster.activeElement(this.time) : null;
+    const element = elementId && this.elements ? this.elements.get(elementId) : null;
+    this.events.push({ type: 'hit', casterId: caster.id, ability: hit.ability, area, element: element?.id ?? null });
 
     for (const target of this.combatants.values()) {
       if (!target.alive || target.team === caster.team || target.isInvulnerable(this.time)) continue;
@@ -244,19 +268,22 @@ export class CombatWorld {
         amount: result.amount,
         crit: result.crit,
         statusId: null,
+        element: element?.id ?? null,
       });
       target.invulnerableUntil = this.time + target.invulnerabilityOnHit;
       this.applyDamage(target, result.amount, caster.id);
       if (target.hp <= 0) continue; // Murió con este impacto.
 
-      if (hit.ability.knockback > 0) {
+      const knockback = hit.ability.knockback + (element && hit.ability.knockback > 0 ? element.bonusKnockback : 0);
+      if (knockback > 0) {
         const away = sub(target.position, caster.position);
         const dir = length(away) > 1e-6 ? normalize(away) : hit.aim;
-        target.knockback = { velocity: scale(dir, hit.ability.knockback / KNOCKBACK_DURATION), remaining: KNOCKBACK_DURATION };
-        if (hit.ability.knockback >= target.poise) this.interrupt(target);
+        target.knockback = { velocity: scale(dir, knockback / KNOCKBACK_DURATION), remaining: KNOCKBACK_DURATION };
+        if (knockback >= target.poise) this.interrupt(target);
       }
       const st = hit.ability.applyStatus;
       if (st?.target === 'hit' && this.rng() < st.chance) this.applyStatus(target, st.statusId, caster.id);
+      if (element?.onHit && this.rng() < element.onHit.chance) this.applyStatus(target, element.onHit.statusId, caster.id);
     }
   }
 

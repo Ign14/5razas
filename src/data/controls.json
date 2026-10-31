@@ -12,5 +12,6 @@
   "quick1": ["Q"],
   "quick2": ["F"],
   "inventory": ["I"],
-  "interact": ["E"]
+  "interact": ["E"],
+  "alchemy": ["K"]
 }

@@ -1,5 +1,16 @@
 # Tareas
 
+## Hecho — 2026-10-31 (Fase 5: alquimia)
+
+- [x] Motor de recetas por datos (9 recetas: las 5 del diseño, electricidad, viento y 2 preparaciones de alimento).
+- [x] Combinaciones inválidas con resultado menor y pista de propiedades.
+- [x] Libro de descubrimientos con XP por primer descubrimiento y preparación rápida de recetas conocidas.
+- [x] Cinco elementos con efectos en los ataques compatibles (incluida la habilidad final).
+- [x] Efectos temporales: Celeridad, Regeneración (curación periódica) y Descarga.
+- [x] Pantalla de alquimia (tecla K), efectos activos en el HUD, colores elementales en impactos y daño.
+- [x] Pruebas: 130 unitarias y 6 E2E.
+
+
 ## Hecho — 2026-10-31 (Fase 4: ecosistema)
 
 - [x] Reloj del mundo (día de 10 min) con hora y día en el HUD y oscuridad nocturna.
@@ -66,8 +77,8 @@
 
 ## Pendiente — siguiente
 
-- [ ] **Fase 5 — Alquimia**: motor de recetas por datos (las combinaciones del §10.4), descubrimientos, interfaz
-      de experimentación, modificadores elementales en ataques y efectos temporales. Preparaciones de alimento.
+- [ ] **Fase 6 — Jefe y narrativa**: Centinela de las Raíces (3 fases), misiones, diálogos, recompensas especiales,
+      historia del territorio y guardado completo en IndexedDB (con versión de esquema y migraciones).
 - [ ] Extraer `CreaturePopulation` de `WorldSimulation` (apariciones, horarios).
 - [ ] Reordenar el inventario arrastrando objetos (hoy la API `swap` existe pero no hay interfaz).
 - [ ] Descartar objetos desde el inventario.

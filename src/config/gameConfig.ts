@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { AlchemyScene } from '../game/scenes/AlchemyScene.ts';
 import { BootScene } from '../game/scenes/BootScene.ts';
 import { GameScene } from '../game/scenes/GameScene.ts';
 import { HudScene } from '../game/scenes/HudScene.ts';
@@ -18,6 +19,6 @@ export function createGameConfig(parent: string): Phaser.Types.Core.GameConfig {
       height: 720,
     },
     fps: { target: 60 },
-    scene: [BootScene, MenuScene, GameScene, HudScene, InventoryScene],
+    scene: [BootScene, MenuScene, GameScene, HudScene, InventoryScene, AlchemyScene],
   };
 }

@@ -579,6 +579,235 @@
       },
       "equip": null,
       "use": null
+    },
+    {
+      "id": "elixir-de-brasa",
+      "name": "Elixir de brasa",
+      "description": "Infusión alquímica de fantasía: los ataques pueden causar quemadura.",
+      "category": "consumable",
+      "rarity": "uncommon",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#ff7a3a"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "infusion",
+            "elementId": "fire",
+            "duration": 60
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "elixir-de-escarcha",
+      "name": "Elixir de escarcha",
+      "description": "Infusión alquímica de fantasía: los ataques pueden ralentizar.",
+      "category": "consumable",
+      "rarity": "uncommon",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#8fd8ff"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "infusion",
+            "elementId": "ice",
+            "duration": 60
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "elixir-umbrio",
+      "name": "Elixir umbrío",
+      "description": "Infusión alquímica de fantasía: los ataques pueden envenenar.",
+      "category": "consumable",
+      "rarity": "uncommon",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#9be36b"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "infusion",
+            "elementId": "poison",
+            "duration": 60
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "elixir-de-chispa",
+      "name": "Elixir de chispa",
+      "description": "Infusión alquímica de fantasía: los ataques pueden causar descarga.",
+      "category": "consumable",
+      "rarity": "rare",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#f2e05a"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "infusion",
+            "elementId": "lightning",
+            "duration": 60
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "elixir-de-vendaval",
+      "name": "Elixir de vendaval",
+      "description": "Infusión alquímica de fantasía: los ataques empujan más lejos.",
+      "category": "consumable",
+      "rarity": "uncommon",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#d8f0e8"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "infusion",
+            "elementId": "wind",
+            "duration": 60
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "tonico-de-viento",
+      "name": "Tónico de viento",
+      "description": "Aumenta la velocidad de movimiento durante un tiempo.",
+      "category": "consumable",
+      "rarity": "uncommon",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#b8e07a"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "applyStatus",
+            "statusId": "haste"
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "tonico-de-raiz",
+      "name": "Tónico de raíz",
+      "description": "Regenera vida de forma gradual.",
+      "category": "consumable",
+      "rarity": "uncommon",
+      "maxStack": 20,
+      "icon": {
+        "shape": "potion",
+        "color": "#e05a6a"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "applyStatus",
+            "statusId": "regeneration"
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "carne-asada",
+      "name": "Carne asada",
+      "description": "Preparación sencilla que restaura 60 de vida.",
+      "category": "consumable",
+      "rarity": "common",
+      "maxStack": 20,
+      "icon": {
+        "shape": "meat",
+        "color": "#a0603a"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "heal",
+            "amount": 60
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "caldo-vital",
+      "name": "Caldo vital",
+      "description": "Restaura 30 de vida y regenera de forma gradual.",
+      "category": "consumable",
+      "rarity": "uncommon",
+      "maxStack": 20,
+      "icon": {
+        "shape": "sap",
+        "color": "#d96a5a"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "heal",
+            "amount": 30
+          },
+          {
+            "kind": "applyStatus",
+            "statusId": "regeneration"
+          }
+        ],
+        "cooldown": 6
+      }
+    },
+    {
+      "id": "mezcla-turbia",
+      "name": "Mezcla turbia",
+      "description": "Resultado de una combinación fallida. Restaura 10 de vida.",
+      "category": "consumable",
+      "rarity": "common",
+      "maxStack": 20,
+      "icon": {
+        "shape": "dust",
+        "color": "#7a6a50"
+      },
+      "equip": null,
+      "use": {
+        "effects": [
+          {
+            "kind": "heal",
+            "amount": 10
+          }
+        ],
+        "cooldown": 6
+      }
     }
   ]
 }

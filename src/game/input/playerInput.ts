@@ -9,8 +9,8 @@ import type { PlayerCommand } from '../../core/simulation/worldSimulation.ts';
 const MOVE_ACTIONS = ['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const;
 /** Acciones activadas por teclado; el ataque básico se activa con el clic izquierdo. */
 const KEY_ACTIONS = ['power1', 'power2', 'power3', 'final', 'dodge'] as const satisfies readonly ActionSlot[];
-/** Ranuras rápidas de consumibles (Q, F), inventario (I) e interacción (E). */
-const OTHER_ACTIONS = ['quick1', 'quick2', 'inventory', 'interact'] as const;
+/** Ranuras rápidas de consumibles (Q, F), inventario (I), interacción (E) y alquimia (K). */
+const OTHER_ACTIONS = ['quick1', 'quick2', 'inventory', 'interact', 'alchemy'] as const;
 type BindingName = (typeof MOVE_ACTIONS)[number] | (typeof KEY_ACTIONS)[number] | (typeof OTHER_ACTIONS)[number];
 export type Bindings = Readonly<Record<BindingName, readonly string[]>>;
 
@@ -95,5 +95,10 @@ export class PlayerInput {
   /** true una vez por pulsación de la tecla de inventario. */
   inventoryPressed(): boolean {
     return this.justDown('inventory');
+  }
+
+  /** true una vez por pulsación de la tecla de alquimia. */
+  alchemyPressed(): boolean {
+    return this.justDown('alchemy');
   }
 }

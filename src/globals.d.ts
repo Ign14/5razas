@@ -10,6 +10,7 @@ interface FiveRazasDebug {
   inventory(): { itemId: string; quantity: number }[];
   equipment(): Record<string, string>;
   paused(): boolean;
+  discoveries(): string[];
   drops(): { itemId: string; x: number; y: number }[];
   hour(): number;
   plants(): { id: string; plantId: string; x: number; y: number; ready: boolean }[];

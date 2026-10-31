@@ -1,0 +1,179 @@
+{
+  "$comment": "Recetas como registros de datos (GAME_DESIGN §10.4). El motor busca la combinación exacta sin condicionales por receta. Las combinaciones inválidas consumen los ingredientes y producen failedResult (§10.5).",
+  "config": {
+    "maxUnits": 4,
+    "failedResult": {
+      "itemId": "mezcla-turbia",
+      "quantity": 1
+    }
+  },
+  "recipes": [
+    {
+      "id": "elixir-de-brasa",
+      "name": "Elixir de brasa",
+      "ingredients": [
+        {
+          "itemId": "hoja-carmesi",
+          "quantity": 1
+        },
+        {
+          "itemId": "raiz-solar",
+          "quantity": 1
+        }
+      ],
+      "result": {
+        "itemId": "elixir-de-brasa",
+        "quantity": 1
+      },
+      "discoveryXp": 15
+    },
+    {
+      "id": "elixir-de-escarcha",
+      "name": "Elixir de escarcha",
+      "ingredients": [
+        {
+          "itemId": "flor-de-escarcha",
+          "quantity": 1
+        },
+        {
+          "itemId": "hongo-azul",
+          "quantity": 1
+        }
+      ],
+      "result": {
+        "itemId": "elixir-de-escarcha",
+        "quantity": 1
+      },
+      "discoveryXp": 15
+    },
+    {
+      "id": "elixir-umbrio",
+      "name": "Elixir umbrío",
+      "ingredients": [
+        {
+          "itemId": "espora-umbria",
+          "quantity": 1
+        },
+        {
+          "itemId": "savia-gris",
+          "quantity": 1
+        }
+      ],
+      "result": {
+        "itemId": "elixir-umbrio",
+        "quantity": 1
+      },
+      "discoveryXp": 15
+    },
+    {
+      "id": "tonico-de-viento",
+      "name": "Tónico de viento",
+      "ingredients": [
+        {
+          "itemId": "semilla-del-viento",
+          "quantity": 1
+        },
+        {
+          "itemId": "hoja-ligera",
+          "quantity": 1
+        }
+      ],
+      "result": {
+        "itemId": "tonico-de-viento",
+        "quantity": 1
+      },
+      "discoveryXp": 15
+    },
+    {
+      "id": "tonico-de-raiz",
+      "name": "Tónico de raíz",
+      "ingredients": [
+        {
+          "itemId": "raiz-vital",
+          "quantity": 1
+        },
+        {
+          "itemId": "flor-dorada",
+          "quantity": 1
+        }
+      ],
+      "result": {
+        "itemId": "tonico-de-raiz",
+        "quantity": 1
+      },
+      "discoveryXp": 15
+    },
+    {
+      "id": "elixir-de-chispa",
+      "name": "Elixir de chispa",
+      "ingredients": [
+        {
+          "itemId": "hongo-azul",
+          "quantity": 1
+        },
+        {
+          "itemId": "polvo-ceniza",
+          "quantity": 2
+        }
+      ],
+      "result": {
+        "itemId": "elixir-de-chispa",
+        "quantity": 1
+      },
+      "discoveryXp": 25
+    },
+    {
+      "id": "elixir-de-vendaval",
+      "name": "Elixir de vendaval",
+      "ingredients": [
+        {
+          "itemId": "semilla-del-viento",
+          "quantity": 2
+        },
+        {
+          "itemId": "pluma",
+          "quantity": 1
+        }
+      ],
+      "result": {
+        "itemId": "elixir-de-vendaval",
+        "quantity": 1
+      },
+      "discoveryXp": 20
+    },
+    {
+      "id": "carne-asada",
+      "name": "Carne asada",
+      "ingredients": [
+        {
+          "itemId": "carne-silvestre",
+          "quantity": 2
+        }
+      ],
+      "result": {
+        "itemId": "carne-asada",
+        "quantity": 1
+      },
+      "discoveryXp": 5
+    },
+    {
+      "id": "caldo-vital",
+      "name": "Caldo vital",
+      "ingredients": [
+        {
+          "itemId": "carne-silvestre",
+          "quantity": 1
+        },
+        {
+          "itemId": "raiz-vital",
+          "quantity": 1
+        }
+      ],
+      "result": {
+        "itemId": "caldo-vital",
+        "quantity": 1
+      },
+      "discoveryXp": 10
+    }
+  ]
+}

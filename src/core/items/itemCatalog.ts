@@ -35,8 +35,19 @@ export const ICON_SHAPES = [
 ] as const;
 export type IconShape = (typeof ICON_SHAPES)[number];
 
-export const USE_EFFECTS = ['heal', 'restoreEnergy'] as const;
+export const USE_EFFECTS = ['heal', 'restoreEnergy', 'applyStatus', 'infusion'] as const;
 export type UseEffectKind = (typeof USE_EFFECTS)[number];
+
+/**
+ * Efecto de un consumible:
+ * - heal / restoreEnergy: cantidad inmediata.
+ * - applyStatus: aplica un estado al jugador (p. ej. velocidad, regeneración).
+ * - infusion: añade un elemento alquímico a los ataques compatibles durante `duration` segundos.
+ */
+export type UseEffect =
+  | { readonly kind: 'heal' | 'restoreEnergy'; readonly amount: number }
+  | { readonly kind: 'applyStatus'; readonly statusId: string }
+  | { readonly kind: 'infusion'; readonly elementId: string; readonly duration: number };
 
 /** Qué categorías se equipan y en qué ranuras pueden ir. */
 const CATEGORY_SLOTS: Readonly<Partial<Record<ItemCategory, readonly EquipSlot[]>>> = {
@@ -53,7 +64,7 @@ export interface EquipData {
 }
 
 export interface UseData {
-  readonly effects: readonly { readonly kind: UseEffectKind; readonly amount: number }[];
+  readonly effects: readonly UseEffect[];
   /** Recuperación compartida por todos los consumibles (s). */
   readonly cooldown: number;
 }
@@ -117,12 +128,29 @@ function parseItem(issues: Issues, it: Json, p: string): ItemDefinition | undefi
   let use: UseData | null = null;
   if (it['use'] !== null && it['use'] !== undefined) {
     const u = issues.record(it['use'], `${p}.use`) ?? {};
-    const effects = (issues.array(u['effects'], `${p}.use.effects`) ?? []).flatMap((ef, i) => {
-      const r = issues.record(ef, `${p}.use.effects[${i}]`);
+    const effects = (issues.array(u['effects'], `${p}.use.effects`) ?? []).flatMap((ef, i): UseEffect[] => {
+      const ep = `${p}.use.effects[${i}]`;
+      const r = issues.record(ef, ep);
       if (!r) return [];
-      const kind = issues.oneOf(r['kind'], USE_EFFECTS, `${p}.use.effects[${i}].kind`);
-      const amount = issues.number(r['amount'], `${p}.use.effects[${i}].amount`, { min: 1, max: 100_000 });
-      return kind && amount !== undefined ? [{ kind, amount }] : [];
+      const kind = issues.oneOf(r['kind'], USE_EFFECTS, `${ep}.kind`);
+      switch (kind) {
+        case 'heal':
+        case 'restoreEnergy': {
+          const amount = issues.number(r['amount'], `${ep}.amount`, { min: 1, max: 100_000 });
+          return amount === undefined ? [] : [{ kind, amount }];
+        }
+        case 'applyStatus': {
+          const statusId = issues.string(r['statusId'], `${ep}.statusId`, { pattern: ID_PATTERN });
+          return statusId ? [{ kind, statusId }] : [];
+        }
+        case 'infusion': {
+          const elementId = issues.string(r['elementId'], `${ep}.elementId`, { pattern: ID_PATTERN });
+          const duration = issues.number(r['duration'], `${ep}.duration`, { min: 1, max: 3600 });
+          return elementId && duration !== undefined ? [{ kind, elementId, duration }] : [];
+        }
+        default:
+          return [];
+      }
     });
     if (effects.length === 0) issues.add(`${p}.use.effects`, 'necesita al menos un efecto');
     use = { effects, cooldown: issues.number(u['cooldown'], `${p}.use.cooldown`, { min: 0, max: 600 }) ?? 0 };

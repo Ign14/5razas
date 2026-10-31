@@ -56,6 +56,8 @@ export class Combatant {
   /** Bloqueo de acciones mientras dura una habilidad. */
   busyUntil = 0;
   dash: (TimedMotion & { readonly invulnerable: boolean }) | null = null;
+  /** Infusión alquímica activa: elemento que añaden sus habilidades compatibles (GAME_DESIGN §10.3). */
+  infusion: { readonly elementId: string; readonly until: number } | null = null;
   knockback: TimedMotion | null = null;
 
   constructor(init: CombatantInit) {
@@ -87,6 +89,11 @@ export class Combatant {
     return this.product('damageTakenMultiplier');
   }
 
+  /** Elemento activo, o null si no hay infusión vigente. */
+  activeElement(time: number): string | null {
+    return this.infusion && time < this.infusion.until ? this.infusion.elementId : null;
+  }
+
   isInvulnerable(time: number): boolean {
     return time < this.invulnerableUntil || (this.dash?.invulnerable ?? false);
   }
@@ -108,6 +115,7 @@ export class Combatant {
     this.alive = true;
     this.statuses.clear();
     this.cooldowns.clear();
+    this.infusion = null;
     this.dash = null;
     this.knockback = null;
     this.busyUntil = 0;

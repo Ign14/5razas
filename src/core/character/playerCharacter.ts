@@ -4,7 +4,7 @@ import { applyModifiers, type Stats } from '../combat/stats.ts';
 import { Equipment } from '../items/equipment.ts';
 import type { EquipmentSetCatalog } from '../items/equipmentSets.ts';
 import { Inventory } from '../items/inventory.ts';
-import type { EquipSlot, ItemCatalog } from '../items/itemCatalog.ts';
+import type { EquipSlot, ItemCatalog, UseEffect } from '../items/itemCatalog.ts';
 import type { ProfessionDefinition } from '../professions/profession.ts';
 import {
   levelForTotalXp,
@@ -146,20 +146,28 @@ export class PlayerCharacter {
     return { ok: true };
   }
 
-  /** Usa un consumible del inventario sobre el combatiente del jugador. */
-  useItem(itemId: string, player: Combatant, time: number): ItemResult {
+  /**
+   * Usa un consumible del inventario sobre el combatiente del jugador. Vida y energía se aplican aquí;
+   * los efectos que requieren el combate (estados, infusiones) se delegan en `applyEffect`.
+   */
+  useItem(itemId: string, player: Combatant, time: number, applyEffect?: (effect: UseEffect) => void): ItemResult {
     if (!player.alive) return { ok: false, reason: 'dead' };
     if (this.inventory.count(itemId) < 1) return { ok: false, reason: 'missing' };
     const use = this.content.items.get(itemId).use;
     if (!use) return { ok: false, reason: 'not-usable' };
     if (time < this.itemReadyAt) return { ok: false, reason: 'cooldown' };
     const wouldHelp = use.effects.some((e) =>
-      e.kind === 'heal' ? player.hp < player.stats.life : player.energy < player.stats.energy,
+      e.kind === 'heal'
+        ? player.hp < player.stats.life
+        : e.kind === 'restoreEnergy'
+          ? player.energy < player.stats.energy
+          : applyEffect !== undefined,
     );
     if (!wouldHelp) return { ok: false, reason: 'no-effect' };
     for (const e of use.effects) {
       if (e.kind === 'heal') player.hp = Math.min(player.stats.life, player.hp + e.amount);
-      else player.energy = Math.min(player.stats.energy, player.energy + e.amount);
+      else if (e.kind === 'restoreEnergy') player.energy = Math.min(player.stats.energy, player.energy + e.amount);
+      else applyEffect?.(e);
     }
     this.inventory.remove(itemId, 1);
     this.itemReadyAt = time + use.cooldown;

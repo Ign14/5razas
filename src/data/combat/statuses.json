@@ -1,9 +1,64 @@
 {
-  "$comment": "Estados alterados iniciales (GAME_DESIGN §6.3). Valores de balance provisionales.",
+  "$comment": "Estados alterados (GAME_DESIGN §6.3) y efectos temporales de alquimia (§10.2). Valores de balance provisionales.",
   "statuses": [
-    { "id": "burn", "name": "Quemadura", "kind": "damageOverTime", "duration": 3, "tickInterval": 0.5, "magnitude": 3, "harmful": true },
-    { "id": "poison", "name": "Envenenamiento", "kind": "damageOverTime", "duration": 6, "tickInterval": 1, "magnitude": 2, "harmful": true },
-    { "id": "slow", "name": "Ralentización", "kind": "speedMultiplier", "duration": 2.5, "magnitude": 0.55, "harmful": true },
-    { "id": "protection", "name": "Protección", "kind": "damageTakenMultiplier", "duration": 5, "magnitude": 0.5, "harmful": false }
+    {
+      "id": "burn",
+      "name": "Quemadura",
+      "kind": "damageOverTime",
+      "duration": 3,
+      "tickInterval": 0.5,
+      "magnitude": 3,
+      "harmful": true
+    },
+    {
+      "id": "poison",
+      "name": "Envenenamiento",
+      "kind": "damageOverTime",
+      "duration": 6,
+      "tickInterval": 1,
+      "magnitude": 2,
+      "harmful": true
+    },
+    {
+      "id": "slow",
+      "name": "Ralentización",
+      "kind": "speedMultiplier",
+      "duration": 2.5,
+      "magnitude": 0.55,
+      "harmful": true
+    },
+    {
+      "id": "protection",
+      "name": "Protección",
+      "kind": "damageTakenMultiplier",
+      "duration": 5,
+      "magnitude": 0.5,
+      "harmful": false
+    },
+    {
+      "id": "shock",
+      "name": "Descarga",
+      "kind": "damageTakenMultiplier",
+      "duration": 3,
+      "magnitude": 1.2,
+      "harmful": true
+    },
+    {
+      "id": "haste",
+      "name": "Celeridad",
+      "kind": "speedMultiplier",
+      "duration": 45,
+      "magnitude": 1.3,
+      "harmful": false
+    },
+    {
+      "id": "regeneration",
+      "name": "Regeneración",
+      "kind": "healOverTime",
+      "duration": 15,
+      "tickInterval": 1,
+      "magnitude": 4,
+      "harmful": false
+    }
   ]
 }

@@ -14,6 +14,7 @@ import { CombatEffects } from '../rendering/combatEffects.ts';
 import { OVERLAY_DEPTH } from '../rendering/depth.ts';
 import { WorldRenderer } from '../rendering/worldRenderer.ts';
 import { GameSession } from '../session.ts';
+import type { AlchemyScene } from './AlchemyScene.ts';
 import type { InventoryScene } from './InventoryScene.ts';
 import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
 
@@ -68,6 +69,7 @@ export class GameScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scene.stop(SceneKeys.Hud);
       this.scene.stop(SceneKeys.Inventory);
+      this.scene.stop(SceneKeys.Alchemy);
     });
   }
 
@@ -75,7 +77,8 @@ export class GameScene extends Phaser.Scene {
     const sim = this.session.sim;
     // La lectura se hace siempre, para consumir pulsaciones y clics hechos sobre el inventario.
     const cmd = this.playerInput.read(sim.player.position);
-    if (this.playerInput.inventoryPressed()) this.toggleInventory();
+    if (this.playerInput.inventoryPressed()) this.toggleOverlay(SceneKeys.Inventory);
+    if (this.playerInput.alchemyPressed()) this.toggleOverlay(SceneKeys.Alchemy);
     const events = this.session.paused ? this.session.flush() : this.session.update(deltaMs / 1000, cmd);
     for (const e of events) this.handleEvent(e);
 
@@ -93,12 +96,16 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private toggleInventory(): void {
-    if (this.scene.isActive(SceneKeys.Inventory)) {
-      (this.scene.get(SceneKeys.Inventory) as InventoryScene).close();
-    } else if (this.session.sim.player.alive) {
-      this.scene.launch(SceneKeys.Inventory, { session: this.session });
+  /** Abre o cierra una pantalla superpuesta (inventario o alquimia); solo una a la vez. */
+  private toggleOverlay(key: typeof SceneKeys.Inventory | typeof SceneKeys.Alchemy): void {
+    const other = key === SceneKeys.Inventory ? SceneKeys.Alchemy : SceneKeys.Inventory;
+    if (this.scene.isActive(key)) {
+      (this.scene.get(key) as InventoryScene | AlchemyScene).close();
+      return;
     }
+    if (!this.session.sim.player.alive) return;
+    if (this.scene.isActive(other)) (this.scene.get(other) as InventoryScene | AlchemyScene).close();
+    this.scene.launch(key, { session: this.session });
   }
 
   private handleEvent(e: SimEvent): void {
@@ -118,8 +125,13 @@ export class GameScene extends Phaser.Scene {
         }
         break;
       }
-      case 'hit':
-        this.effects.showArea(e.area, e.ability.vfx, 0.18, false);
+      case 'hit': {
+        const color = e.element ? this.content.elements.get(e.element).color : null;
+        this.effects.showArea(e.area, e.ability.vfx, 0.18, false, color);
+        break;
+      }
+      case 'heal':
+        this.floatAt(e.targetId, `+${e.amount}`, '#7fe07a');
         break;
       case 'interrupted':
         this.creatureViews.get(e.targetId)?.clearTelegraph();
@@ -133,7 +145,8 @@ export class GameScene extends Phaser.Scene {
         } else {
           this.creatureViews.get(e.targetId)?.hurt(sim.time);
         }
-        const color = isPlayer ? '#ff6a5a' : e.crit ? '#ffd84a' : e.statusId ? '#c6f08a' : '#ffffff';
+        const elementColor = e.element ? this.content.elements.get(e.element).color : null;
+        const color = isPlayer ? '#ff6a5a' : e.crit ? '#ffd84a' : (elementColor ?? (e.statusId ? '#c6f08a' : '#ffffff'));
         this.floatAt(e.targetId, `${e.amount}${e.crit ? '!' : ''}`, color, e.crit);
         break;
       }
@@ -197,6 +210,7 @@ function exposeDebug(session: GameSession): void {
     inventory: () => sim.character.inventory.contents.flatMap((s) => (s ? [{ ...s }] : [])),
     equipment: () => sim.character.equipment.toJSON(),
     paused: () => session.paused,
+    discoveries: () => session.sim.discoveries.toJSON(),
     hour: () => sim.hour,
     plants: () => [...sim.plants.all()].map((n) => ({ id: n.id, plantId: n.plantId, x: n.position.x, y: n.position.y, ready: sim.plants.isReady(n, sim.time, sim.hour) })),
     drops: () => [...sim.drops.all()].map((d) => ({ itemId: d.itemId, x: d.position.x, y: d.position.y })),

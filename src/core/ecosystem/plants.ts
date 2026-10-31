@@ -156,15 +156,20 @@ export class PlantField {
     return time >= node.readyAt && inHourRange(hour, this.catalog.get(node.plantId).conditions.activeHours);
   }
 
-  /** Planta más cercana dentro de `radius` (madura o no, para poder informar al jugador). */
-  nearest(at: Vec2, radius: number): PlantNode | null {
+  /**
+   * Planta a la que apunta la interacción dentro de `radius`: la madura más cercana; si no hay
+   * ninguna madura, la más cercana (para informar al jugador de cuándo volverá a crecer).
+   */
+  nearest(at: Vec2, radius: number, time = 0, hour = 12): PlantNode | null {
     let best: PlantNode | null = null;
-    let bestDist = radius;
+    let bestScore = Infinity;
     for (const n of this.nodes.values()) {
       const d = Math.hypot(n.position.x - at.x, n.position.y - at.y);
-      if (d <= bestDist) {
+      if (d > radius) continue;
+      const score = d + (this.isReady(n, time, hour) ? 0 : radius + 1);
+      if (score < bestScore) {
         best = n;
-        bestDist = d;
+        bestScore = score;
       }
     }
     return best;

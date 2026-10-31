@@ -1,6 +1,6 @@
 # Arquitectura — 5RAZAS
 
-Estado: Fases 0, 2, 3 y 4 completas; Fase 1 con pendientes menores. Última actualización: 2026-10-31.
+Estado: Fases 0, 2, 3, 4 y 5 completas; Fase 1 con pendientes menores. Última actualización: 2026-10-31.
 
 ## Stack verificado
 
@@ -31,11 +31,12 @@ src/
     items/     Catálogo de objetos, inventario, equipamiento, conjuntos, tablas de botín, objetos en el suelo.
     character/ PlayerCharacter: progresión + inventario + equipo + consumibles → atributos finales.
     ecosystem/ Catálogo de plantas y PlantField (ubicación por zonas, recolección, regeneración).
+    alchemy/   Elementos, libro de recetas (índice por combinación), propiedades combinadas, descubrimientos.
     simulation/ WorldSimulation: jugador, criaturas, IA, combate, apariciones y búfer de entrada.
     data/      Validación de JSON y contratos de configuración.
   data/        Contenido JSON: tiles, mapas Tiled, personaje, controles, combat/ (habilidades y
                estados), professions/, creatures/, items/ (objetos, conjuntos, botín), progression.json,
-               plants.json, world.json (ciclo de día y noche).
+               plants.json, world.json (ciclo de día y noche), alchemy/ (elementos y recetas).
   game/        Adaptadores Phaser.
     scenes/    Boot → Menu → Game (+ Hud en paralelo).
     rendering/ Texturas provisionales, profundidades, WorldRenderer (+ transparencia por oclusión),
@@ -45,6 +46,7 @@ src/
     ui/        Minimapa, marco del jugador (nivel, etapa, XP), barra de acciones (bloqueos por nivel),
                ranuras rápidas Q/F, notificaciones laterales, textos de interfaz.
     scenes/InventoryScene  Inventario y equipamiento (pausa la simulación).
+    scenes/AlchemyScene    Mortero, propiedades combinadas y libro de descubrimientos (pausa la simulación).
     session.ts Partida en curso: WorldSimulation + exploración + suscripción a eventos (sin Phaser).
     content.ts Carga y validación del contenido.
   config/      Configuración del motor Phaser.
@@ -136,6 +138,25 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
 - **Recolección** (tecla E, alcance 1,4 celdas): ingrediente al inventario (si no cabe, cae al suelo), XP y
   regeneración. Aviso en pantalla con el estado de la planta (madura, regenerándose o fuera de horario).
 
+## Alquimia (Fase 5)
+
+- **Recetas** (`alchemy/recipes.json`): registros de datos con ingredientes (2–4 unidades), resultado y XP de
+  descubrimiento. El motor calcula una **clave canónica** (ingredientes agrupados y ordenados) y la busca en un
+  índice: no hay condicionales por combinación (§10.4). La validación rechaza combinaciones duplicadas.
+- **Combinaciones inválidas** (§10.5): consumen los ingredientes y producen `failedResult` (Mezcla turbia). Se
+  muestran las propiedades predominantes como pista.
+- **Descubrimientos**: `DiscoveryBook` registra la primera vez que se obtiene cada receta (con XP); las recetas
+  conocidas pueden prepararse desde el libro. Serializable para el guardado.
+- **Elementos** (`alchemy/elements.json`): Fuego (quemadura), Hielo (ralentización), Veneno (envenenamiento),
+  Electricidad (descarga: +20 % daño recibido) y Viento (retroceso extra). Mecánicas fantásticas.
+- **Infusión**: un elixir fija `Combatant.infusion` durante N s (una a la vez). Solo las habilidades con
+  `compatibleModifiers: ["element"]` aplican el elemento: Golpe del Guardián, Embestida, Corte Circular y la
+  final Tempestad Ancestral (§6.2). Los impactos y números de daño toman el color del elemento.
+- **Efectos de consumibles** (`UseEffect`): `heal`, `restoreEnergy`, `applyStatus` (Celeridad, Regeneración) e
+  `infusion`. Nuevo tipo de estado `healOverTime` (evento `heal`, números verdes).
+- **Preparaciones de alimento** (§8): Carne asada y Caldo vital, también como recetas.
+- HUD: línea de efectos activos bajo el marco del jugador (infusión y estados con tiempo restante).
+
 ## Sistema de coordenadas
 
 - Celdas lógicas: la celda (i, j) ocupa [i, i+1) × [j, j+1). Las entidades usan posiciones continuas.
@@ -168,7 +189,7 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
 ## Gancho de depuración
 
 `window.__5RAZAS__` (solo lectura): `player()`, `exploredCells()`, `creatures()`, `cooldowns()`, `xp()`,
-`level()`, `inventory()`, `equipment()`, `drops()`, `paused()`, `hour()`, `plants()` y `mapId`.
+`level()`, `inventory()`, `equipment()`, `drops()`, `paused()`, `hour()`, `plants()`, `discoveries()` y `mapId`.
 Lo usan las pruebas E2E.
 
 ## Limitaciones conocidas

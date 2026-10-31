@@ -5,7 +5,7 @@ import type { GameContent } from '../content.ts';
 import { itemIconKey, RARITY_COLORS, RARITY_NAMES } from '../rendering/itemIcons.ts';
 import type { GameSession } from '../session.ts';
 import type { ItemResult } from '../../core/character/playerCharacter.ts';
-import { CATEGORY_NAMES, formatModifier, formatStat, ITEM_FAILURE_TEXT, SLOT_NAMES, STAT_NAMES } from '../ui/texts.ts';
+import { CATEGORY_NAMES, describeEffect, formatModifier, formatStat, ITEM_FAILURE_TEXT, SLOT_NAMES, STAT_NAMES } from '../ui/texts.ts';
 import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
 
 const PANEL_W = 820;
@@ -211,7 +211,7 @@ export class InventoryScene extends Phaser.Scene {
       for (const m of def.equip.modifiers) line(formatModifier(m), 11, '#9fe870');
       if (def.equip.setId) line(`Conjunto: ${this.content.sets.get(def.equip.setId).name}`, 11, '#e8c872');
     }
-    if (def.use) for (const e of def.use.effects) line(e.kind === 'heal' ? `Restaura ${e.amount} de vida` : `Restaura ${e.amount} de energía`, 11, '#9fe870');
+    if (def.use) for (const e of def.use.effects) line(describeEffect(e, this.content), 11, '#9fe870');
     ty += 6;
 
     const act = (label: string, fn: () => ItemResult) => {

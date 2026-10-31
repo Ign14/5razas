@@ -1,6 +1,8 @@
 import type { ItemFailure } from '../../core/character/playerCharacter.ts';
 import type { StatKey, StatModifier } from '../../core/combat/stats.ts';
-import type { EquipSlot, ItemCategory } from '../../core/items/itemCatalog.ts';
+import type { ElementCatalog } from '../../core/alchemy/elements.ts';
+import type { StatusCatalog } from '../../core/combat/statusEffects.ts';
+import type { EquipSlot, ItemCategory, UseEffect } from '../../core/items/itemCatalog.ts';
 
 /** Textos de interfaz en español (presentación; las reglas no dependen de ellos). */
 export const STAT_NAMES: Readonly<Record<StatKey, string>> = {
@@ -62,4 +64,23 @@ export function formatModifier(m: StatModifier): string {
   }
   const v = PERCENT_STATS.has(m.stat) ? `${(m.value * 100).toFixed(0)} %` : String(m.value);
   return `${m.value >= 0 ? '+' : ''}${v} ${STAT_NAMES[m.stat]}`;
+}
+
+/** Descripción legible del efecto de un consumible. */
+export function describeEffect(
+  e: UseEffect,
+  content: { readonly statuses: StatusCatalog; readonly elements: ElementCatalog },
+): string {
+  switch (e.kind) {
+    case 'heal':
+      return `Restaura ${e.amount} de vida`;
+    case 'restoreEnergy':
+      return `Restaura ${e.amount} de energía`;
+    case 'applyStatus': {
+      const st = content.statuses.get(e.statusId);
+      return `${st.name} durante ${st.duration} s`;
+    }
+    case 'infusion':
+      return `Ataques con ${content.elements.get(e.elementId).name} durante ${e.duration} s`;
+  }
 }

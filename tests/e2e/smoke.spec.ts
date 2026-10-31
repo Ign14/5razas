@@ -142,3 +142,23 @@ test('ecosistema: plantas y fauna en el mundo, reloj en marcha y recolección co
   await page.waitForTimeout(200);
   expect(errors).toEqual([]);
 });
+
+test('alquimia: se abre con K, pausa el juego, cambia con I y se cierra con Esc', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__5RAZAS__ !== undefined);
+  const paused = () => page.evaluate(() => window.__5RAZAS__?.paused());
+  await page.keyboard.press('k');
+  await expect.poll(paused).toBe(true);
+  await page.screenshot({ path: 'test-results/11-alchemy.png' });
+  // Abrir el inventario cierra la alquimia (solo una pantalla a la vez) y el juego sigue en pausa.
+  await page.keyboard.press('i');
+  await page.waitForTimeout(200);
+  expect(await paused()).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect.poll(paused).toBe(false);
+  expect(await page.evaluate(() => window.__5RAZAS__?.discoveries())).toEqual([]);
+  expect(errors).toEqual([]);
+});

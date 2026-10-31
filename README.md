@@ -31,6 +31,7 @@ Node ≥ 22.12.
 | Consumibles rápidos | Q, F |
 | Inventario y equipo | I (Esc para cerrar) |
 | Recolectar | E |
+| Alquimia | K (Esc para cerrar) |
 | Comenzar partida | ENTER o clic |
 
 Las teclas se configuran en `src/data/controls.json`.

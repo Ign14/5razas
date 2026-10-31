@@ -98,6 +98,19 @@ describe('plantas', () => {
     }
   });
 
+  it('la interacción prefiere la planta madura aunque haya otra regenerándose más cerca', () => {
+    const zone = content.map.gatherZones.find((z) => z.id === 'hoja-carmesi-sendero');
+    if (!zone) throw new Error('falta la zona');
+    const field = PlantField.place(content.map, [{ ...zone, count: 2 }], content.plants, createRng(1));
+    const [a, b] = [...field.all()];
+    if (!a || !b) throw new Error('faltan plantas');
+    field.harvest(a.id, 0, 12, rng);
+    const between = { x: (a.position.x * 3 + b.position.x) / 4, y: (a.position.y * 3 + b.position.y) / 4 };
+    const radius = Math.hypot(b.position.x - between.x, b.position.y - between.y) + 0.1;
+    expect(field.nearest(between, radius, 1, 12)?.id).toBe(b.id);
+    expect(field.nearest(a.position, 0.1, 1, 12)?.id).toBe(a.id); // solo la regenerándose al alcance
+  });
+
   it('recolectar, esperar a que vuelva a crecer y respetar el horario', () => {
     const field = PlantField.place(content.map, content.map.gatherZones, content.plants, createRng(1));
     const carmesi = [...field.all()].find((n) => n.plantId === 'hoja-carmesi');

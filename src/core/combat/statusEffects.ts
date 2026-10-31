@@ -1,7 +1,7 @@
 import { ID_PATTERN, Issues } from '../data/validate.ts';
 
 /** Estados alterados de GAME_DESIGN §6.3, definidos por datos. */
-export const STATUS_KINDS = ['damageOverTime', 'speedMultiplier', 'damageTakenMultiplier'] as const;
+export const STATUS_KINDS = ['damageOverTime', 'healOverTime', 'speedMultiplier', 'damageTakenMultiplier'] as const;
 export type StatusKind = (typeof STATUS_KINDS)[number];
 
 export interface StatusDefinition {
@@ -11,10 +11,11 @@ export interface StatusDefinition {
   /** Duración base en segundos. La resistencia del objetivo la reduce si el estado es perjudicial. */
   readonly duration: number;
   /**
-   * damageOverTime: daño por tick. speedMultiplier / damageTakenMultiplier: factor multiplicativo.
+   * damageOverTime / healOverTime: daño o curación por tick.
+   * speedMultiplier / damageTakenMultiplier: factor multiplicativo.
    */
   readonly magnitude: number;
-  /** Solo para damageOverTime. */
+  /** Solo para damageOverTime y healOverTime. */
   readonly tickInterval: number;
   readonly harmful: boolean;
 }
@@ -41,7 +42,9 @@ export function parseStatusCatalog(raw: unknown, source: string): StatusCatalog 
       duration: issues.number(s['duration'], `${p}.duration`, { min: 0.1, max: 600 }),
       magnitude: issues.number(s['magnitude'], `${p}.magnitude`, { min: 0 }),
       tickInterval:
-        kind === 'damageOverTime' ? issues.number(s['tickInterval'], `${p}.tickInterval`, { min: 0.05, max: 60 }) : 0,
+        kind === 'damageOverTime' || kind === 'healOverTime'
+          ? issues.number(s['tickInterval'], `${p}.tickInterval`, { min: 0.05, max: 60 })
+          : 0,
       harmful: issues.boolean(s['harmful'], `${p}.harmful`),
     };
     if (def.id && all.has(def.id)) issues.add(`${p}.id`, `identificador duplicado "${def.id}"`);

@@ -1,0 +1,52 @@
+{
+  "$comment": "Modificadores elementales de ataques (GAME_DESIGN §10.3). Mecánicas fantásticas, no propiedades históricas de los pueblos representados.",
+  "elements": [
+    {
+      "id": "fire",
+      "name": "Fuego",
+      "color": "#ff7a3a",
+      "onHit": {
+        "statusId": "burn",
+        "chance": 0.5
+      },
+      "bonusKnockback": 0
+    },
+    {
+      "id": "ice",
+      "name": "Hielo",
+      "color": "#8fd8ff",
+      "onHit": {
+        "statusId": "slow",
+        "chance": 0.5
+      },
+      "bonusKnockback": 0
+    },
+    {
+      "id": "poison",
+      "name": "Veneno",
+      "color": "#9be36b",
+      "onHit": {
+        "statusId": "poison",
+        "chance": 0.45
+      },
+      "bonusKnockback": 0
+    },
+    {
+      "id": "lightning",
+      "name": "Electricidad",
+      "color": "#f2e05a",
+      "onHit": {
+        "statusId": "shock",
+        "chance": 0.35
+      },
+      "bonusKnockback": 0
+    },
+    {
+      "id": "wind",
+      "name": "Viento",
+      "color": "#d8f0e8",
+      "onHit": null,
+      "bonusKnockback": 0.6
+    }
+  ]
+}
