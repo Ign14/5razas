@@ -51,3 +51,14 @@ Las teclas se cambian en Esc → Opciones (los valores predeterminados están en
 Documentación: `docs/GAME_DESIGN.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/TASKS.md`, `docs/DECISIONS.md`.
 
 El arte actual es **provisional** y generado por código. La narrativa es ficción provisional pendiente de revisión.
+
+## Contribuir
+
+El código es abierto: cualquiera puede hacer un fork, modificarlo y proponer cambios mediante *pull request*.
+Antes de proponer cambios, lee `CLAUDE.md` (reglas del proyecto) y `docs/ARCHITECTURE.md`, y ejecuta
+`npm run check` y `npm run test:e2e`. Todo contenido nuevo (imágenes, audio, código) debe tener una licencia
+compatible y verificada.
+
+## Licencia
+
+[MIT](LICENSE) © 2026 Ign14.

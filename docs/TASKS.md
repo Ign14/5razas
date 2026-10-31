@@ -5,6 +5,7 @@
 - [x] Repositorio público: https://github.com/Ign14/5razas
 - [x] Juego publicado en GitHub Pages: https://ign14.github.io/5razas/ (verificado: carga sin errores de consola).
 - [x] `npm run deploy` publica `dist/` en la rama `gh-pages`; flujo de GitHub Actions (`.github/workflows/deploy.yml`) preparado, en modo manual.
+- [x] Licencia MIT (`LICENSE`) y sección «Contribuir» en el README.
 
 ## Hecho — 2026-10-31 (pulido)
 
@@ -124,6 +125,5 @@
 ## Problemas conocidos
 
 - GitHub Actions no arranca en la cuenta ("account is locked due to a billing issue"): CI y despliegue automático no disponibles hasta resolverlo en GitHub → Settings → Billing. Mientras tanto, despliegue manual con `npm run deploy`.
-- El repositorio no declara licencia (todos los derechos reservados por defecto); pendiente de decisión del autor.
 - `npm audit`: 1 vulnerabilidad moderada (minimatch, ReDoS) en dependencias de desarrollo de ESLint; el "fix" sugerido degrada ESLint a 4.x, por lo que no se aplica. Sin impacto en el juego publicado.
 - El bundle de producción pesa ~1,25 MB (330 kB gzip), casi todo Phaser.
