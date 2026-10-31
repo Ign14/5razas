@@ -23,6 +23,7 @@ export class ActionBar {
   private readonly flashUntil = new Map<ActionSlot, number>();
   private x = 0;
   private y = 0;
+  private signature = '';
 
   constructor(scene: Phaser.Scene, slots: readonly ActionBarSlot[]) {
     this.g = scene.add.graphics();
@@ -50,12 +51,22 @@ export class ActionBar {
     });
   }
 
+  setKeyLabels(labels: Readonly<Record<ActionSlot, string>>): void {
+    this.slots.forEach((s, i) => this.keys[i]?.setText(labels[s.slot]));
+  }
+
   /** Resalta en rojo una ranura (p. ej. sin energía). */
   flash(slot: ActionSlot, now: number): void {
     this.flashUntil.set(slot, now + 0.35);
   }
 
   update(player: Combatant, now: number): void {
+    // Solo se redibuja si cambian recuperaciones (en décimas), energía disponible, nivel o avisos.
+    const sig = this.slots
+      .map((s) => `${Math.ceil(player.cooldownRemaining(s.ability.id, now) * 10)}${player.energy < s.ability.energyCost ? 'e' : ''}${(this.flashUntil.get(s.slot) ?? 0) > now ? 'f' : ''}`)
+      .join(',') + `|${player.level}|${this.x},${this.y}`;
+    if (sig === this.signature) return;
+    this.signature = sig;
     const g = this.g.clear();
     this.slots.forEach((s, i) => {
       const sx = this.x + i * (SLOT + GAP);

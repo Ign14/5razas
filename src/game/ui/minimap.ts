@@ -2,12 +2,15 @@ import type Phaser from 'phaser';
 import { cellToScreen } from '../../core/math/iso.ts';
 import { directionAngle } from '../../core/movement/direction.ts';
 import type { Vec2 } from '../../core/math/vector.ts';
+import type { NarrativeCatalog } from '../../core/narrative/dialogue.ts';
 import type { GameSession } from '../session.ts';
+import { computeMarkers, MARKER_COLORS } from './mapMarkers.ts';
 
 /** Métrica isométrica reducida del minimapa: cada celda es un rombo de 4 × 2 px. */
 const MINI = { tileWidth: 4, tileHeight: 2 } as const;
 const FOG_COLOR: readonly [number, number, number] = [16, 18, 24];
-const TEXTURE_KEY = 'ui-minimap';
+export const MINIMAP_TEXTURE_KEY = 'ui-minimap';
+const TEXTURE_KEY = MINIMAP_TEXTURE_KEY;
 const PADDING = 6;
 
 function rgb(color: string): [number, number, number] {
@@ -32,8 +35,11 @@ export class Minimap {
   readonly width: number;
   readonly height: number;
 
-  constructor(scene: Phaser.Scene, session: GameSession) {
+  private readonly narrative: NarrativeCatalog;
+
+  constructor(scene: Phaser.Scene, session: GameSession, narrative: NarrativeCatalog) {
     this.session = session;
+    this.narrative = narrative;
     const { map } = session;
     this.width = (map.width + map.height) * (MINI.tileWidth / 2);
     this.height = (map.width + map.height) * (MINI.tileHeight / 2);
@@ -110,6 +116,12 @@ export class Minimap {
     const t1 = tip(4, 2.4);
     const t2 = tip(4, -2.4);
     this.marker.clear();
+    for (const m of computeMarkers(this.session, this.narrative)) {
+      const p = this.toMinimap(m.at);
+      const r = m.kind === 'boss' ? 3.5 : m.kind === 'objective' ? 3 : 2.5;
+      this.marker.fillStyle(0x000000, 0.8).fillCircle(this.view.x + p.x, this.view.y + p.y, r + 1);
+      this.marker.fillStyle(MARKER_COLORS[m.kind], 1).fillCircle(this.view.x + p.x, this.view.y + p.y, r);
+    }
     this.marker.fillStyle(0xffffff, 1).fillTriangle(t0.x, t0.y, t1.x, t1.y, t2.x, t2.y);
     this.marker.fillStyle(0xe8483a, 1).fillCircle(cx, cy, 2);
   }

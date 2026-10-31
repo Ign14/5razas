@@ -9,9 +9,9 @@ import type { PlayerCommand } from '../../core/simulation/worldSimulation.ts';
 const MOVE_ACTIONS = ['moveUp', 'moveDown', 'moveLeft', 'moveRight'] as const;
 /** Acciones activadas por teclado; el ataque básico se activa con el clic izquierdo. */
 const KEY_ACTIONS = ['power1', 'power2', 'power3', 'final', 'dodge'] as const satisfies readonly ActionSlot[];
-/** Consumibles (Q, F), inventario (I), interacción (E), alquimia (K), diario (J) y menú (Esc). */
-const OTHER_ACTIONS = ['quick1', 'quick2', 'inventory', 'interact', 'alchemy', 'journal', 'menu'] as const;
-type BindingName = (typeof MOVE_ACTIONS)[number] | (typeof KEY_ACTIONS)[number] | (typeof OTHER_ACTIONS)[number];
+/** Consumibles (Q, F), inventario (I), interacción (E), alquimia (K), diario (J), mapa (M), menú (Esc) y rendimiento (F3). */
+const OTHER_ACTIONS = ['quick1', 'quick2', 'inventory', 'interact', 'alchemy', 'journal', 'map', 'menu', 'perf'] as const;
+export type BindingName = (typeof MOVE_ACTIONS)[number] | (typeof KEY_ACTIONS)[number] | (typeof OTHER_ACTIONS)[number];
 export type Bindings = Readonly<Record<BindingName, readonly string[]>>;
 
 /** Valida las asignaciones contra los nombres de Phaser.Input.Keyboard.KeyCodes. */
@@ -55,6 +55,12 @@ export class PlayerInput {
     });
   }
 
+  /** Libera las teclas registradas (al cambiar la configuración). */
+  destroy(): void {
+    const keyboard = this.scene.input.keyboard;
+    for (const list of Object.values(this.keys)) for (const k of list) keyboard?.removeKey(k, true);
+  }
+
   private down(name: BindingName): boolean {
     return this.keys[name].some((k) => k.isDown);
   }
@@ -92,9 +98,14 @@ export class PlayerInput {
     return { move, aim, action, pressed, quickSlot, interact: this.justDown('interact') };
   }
 
+  /** true una vez por pulsación de la tecla del indicador de rendimiento (F3). */
+  perfPressed(): boolean {
+    return this.justDown('perf');
+  }
+
   /** Pantalla superpuesta solicitada en este fotograma (una pulsación por tecla). */
-  overlayPressed(): 'inventory' | 'alchemy' | 'journal' | 'menu' | null {
-    for (const k of ['menu', 'inventory', 'alchemy', 'journal'] as const) if (this.justDown(k)) return k;
+  overlayPressed(): 'inventory' | 'alchemy' | 'journal' | 'map' | 'menu' | null {
+    for (const k of ['menu', 'inventory', 'alchemy', 'journal', 'map'] as const) if (this.justDown(k)) return k;
     return null;
   }
 }

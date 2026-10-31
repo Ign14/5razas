@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { cellToScreen, type IsoMetrics } from '../../core/math/iso.ts';
-import type { NpcDefinition } from '../../core/narrative/dialogue.ts';
+import { npcQuestIndicator, type NpcDefinition } from '../../core/narrative/dialogue.ts';
 import type { QuestLog } from '../../core/quests/quests.ts';
 import type { NpcPlacement } from '../../core/world/worldMap.ts';
 import { ENTITY_DEPTH_BIAS, sortedDepth } from '../rendering/depth.ts';
@@ -24,16 +24,6 @@ export class NpcView {
   }
 
   sync(quests: QuestLog): void {
-    let mark = '';
-    for (const rule of this.npc.dialogue) {
-      if (!rule.when) continue;
-      const status = quests.status(rule.when.quest);
-      if (status === 'completed') {
-        mark = '?';
-        break;
-      }
-      if (status === 'available') mark = '!';
-    }
-    this.marker.setText(mark);
+    this.marker.setText(npcQuestIndicator(this.npc, quests) ?? '');
   }
 }

@@ -214,3 +214,32 @@ test('guardado: guardar, recargar la página y continuar recupera el progreso', 
   expect(after?.y).toBeCloseTo(before?.y ?? 0, 1);
   expect(errors).toEqual([]);
 });
+
+test('opciones: reasignar el inventario a la tecla O desde el menú de pausa', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__5RAZAS__ !== undefined);
+  const paused = () => page.evaluate(() => window.__5RAZAS__?.paused());
+  await page.keyboard.press('Escape');
+  await expect.poll(paused).toBe(true);
+  // Menú de pausa: panel de 300 × 266 centrado; "Opciones" es el tercer botón.
+  await page.mouse.click(640, Math.round((720 - 266) / 2) + 128 + 13);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/21-options.png' });
+  // Fila "Inventario" (13.ª acción): botón "Cambiar" a la derecha del panel de 560 px.
+  const h = 120 + 17 * 22 + 40;
+  const top = Math.max(8, Math.round((720 - h) / 2));
+  await page.mouse.click(Math.round((1280 - 560) / 2) + 560 - 70, top + 46 + 12 * 22 + 10);
+  await page.keyboard.press('o');
+  await page.waitForTimeout(200);
+  await page.keyboard.press('Escape');
+  await expect.poll(paused).toBe(false);
+  await page.keyboard.press('i');
+  await page.waitForTimeout(300);
+  expect(await paused()).toBe(false); // I ya no abre el inventario
+  await page.keyboard.press('o');
+  await expect.poll(paused).toBe(true);
+  expect(errors).toEqual([]);
+});

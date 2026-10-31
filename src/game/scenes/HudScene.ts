@@ -13,6 +13,8 @@ import { NotificationFeed } from '../ui/notifications.ts';
 import { PlayerFrame } from '../ui/playerFrame.ts';
 import { QuickSlotsView } from '../ui/quickSlots.ts';
 import { ITEM_FAILURE_TEXT } from '../ui/texts.ts';
+import { displayKey, REGISTRY_SETTINGS, type UserSettings } from '../input/settings.ts';
+import type { GameScene } from './GameScene.ts';
 import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
 
 const MARGIN = 12;
@@ -24,7 +26,6 @@ const FAILURE_TEXT: Readonly<Record<UseFailure, string>> = {
   busy: '',
   dead: '',
 };
-const SLOT_KEYS = { basic: 'Clic', power1: '1', power2: '2', power3: '3', final: 'R', dodge: 'Esp' } as const;
 
 /** HUD superpuesto, con cámara propia (no afectado por el seguimiento del mundo). */
 export class HudScene extends Phaser.Scene {
@@ -40,6 +41,7 @@ export class HudScene extends Phaser.Scene {
   private notice!: Phaser.GameObjects.Text;
   private prompt!: Phaser.GameObjects.Text;
   private effectsLine!: Phaser.GameObjects.Text;
+  private perfText!: Phaser.GameObjects.Text;
   private questTracker!: QuestTracker;
   private bossBar!: BossBar;
   private banner!: Phaser.GameObjects.Text;
@@ -58,28 +60,27 @@ export class HudScene extends Phaser.Scene {
   create(): void {
     this.content = this.registry.get(REGISTRY_CONTENT) as GameContent;
     const sim = this.session.sim;
-    this.minimap = new Minimap(this, this.session);
+    this.minimap = new Minimap(this, this.session, this.content.narrative);
     this.frame = new PlayerFrame(this, MARGIN, MARGIN, this.content.character.name, this.content.profession.name);
     this.actionBar = new ActionBar(
       this,
       (['basic', 'power1', 'power2', 'power3', 'final', 'dodge'] as const).map((slot) => ({
         slot,
-        key: SLOT_KEYS[slot],
+        key: '',
         ability: sim.abilityFor(slot),
       })),
     );
     this.quickSlots = new QuickSlotsView(this, ['Q', 'F']);
     this.feed = new NotificationFeed(this);
     this.sectorLabel = this.add.text(0, 0, '', { ...TEXT, fontSize: '13px', align: 'right' }).setOrigin(1, 0);
-    this.hint = this.add
-      .text(0, 0, 'WASD moverse · Clic atacar · 1 2 3 poderes · R final · Espacio evadir · Q F consumibles · E interactuar · I inventario · K alquimia · J misiones · Esc menú', {
-        ...TEXT,
-        fontSize: '11px',
-        color: '#a9a596',
-      })
-      .setOrigin(0.5, 1);
+    this.hint = this.add.text(0, 0, '', { ...TEXT, fontSize: '11px', color: '#a9a596' }).setOrigin(0.5, 1);
+    this.applyKeyLabels();
+    const onSettings = () => { this.applyKeyLabels(); };
+    this.registry.events.on(`changedata-${REGISTRY_SETTINGS}`, onSettings);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.registry.events.off(`changedata-${REGISTRY_SETTINGS}`, onSettings));
     this.effectsLine = this.add.text(MARGIN + 2, MARGIN + 94, '', { ...TEXT, fontSize: '11px' });
     this.questTracker = new QuestTracker(this);
+    this.perfText = this.add.text(0, 0, '', { ...TEXT, fontSize: '11px', color: '#9fe870' }).setOrigin(0.5, 0);
     this.bossBar = new BossBar(this);
     this.prompt = this.add
       .text(0, 0, '', { ...TEXT, fontSize: '14px', color: '#f2efe0', backgroundColor: '#0b0d12cc', padding: { x: 8, y: 4 } })
@@ -104,6 +105,19 @@ export class HudScene extends Phaser.Scene {
       this.scale.off('resize', undefined, this);
       this.minimap.destroy();
     });
+  }
+
+  /** Etiquetas de teclas de la barra de acciones y de la ayuda, según la configuración actual. */
+  private applyKeyLabels(): void {
+    const b = (this.registry.get(REGISTRY_SETTINGS) as UserSettings).bindings;
+    const k = (name: keyof typeof b) => displayKey(b[name][0]);
+    this.actionBar.setKeyLabels({ basic: 'Clic', power1: k('power1'), power2: k('power2'), power3: k('power3'), final: k('final'), dodge: k('dodge') });
+    this.quickSlots.setKeyLabels([k('quick1'), k('quick2')], k('inventory'));
+    this.hint.setText(
+      `${k('moveUp')}${k('moveLeft')}${k('moveDown')}${k('moveRight')} moverse · Clic atacar · ${k('power1')} ${k('power2')} ${k('power3')} poderes · ` +
+        `${k('final')} final · ${k('dodge')} evadir · ${k('interact')} interactuar · ${k('inventory')} inventario · ` +
+        `${k('alchemy')} alquimia · ${k('journal')} misiones · ${k('map')} mapa · Esc menú`,
+    );
   }
 
   private itemName(itemId: string): string {
@@ -221,6 +235,7 @@ export class HudScene extends Phaser.Scene {
     this.notice.setPosition(width / 2, height * 0.3);
     this.questTracker.layout(MARGIN + 2, MARGIN + 114);
     this.bossBar.layout(width / 2, MARGIN + 18);
+    this.perfText.setPosition(width / 2, MARGIN + 52);
     this.prompt.setPosition(width / 2, height - MARGIN - 90);
     this.banner.setPosition(width / 2, height * 0.2);
     this.deathOverlay.setSize(width, height);
@@ -244,11 +259,24 @@ export class HudScene extends Phaser.Scene {
     );
     this.updatePrompt();
     this.updateEffects();
-    this.questTracker.update(sim.quests);
+    this.questTracker.update(sim.quests, this.content.narrative);
+    this.updatePerf();
     const boss = [...sim.creatures.values()].find(
       (c) => c.boss !== null && (c.brain.state === 'chase' || c.combatant.hp < c.combatant.stats.life),
     );
     this.bossBar.update(boss ?? null);
+  }
+
+  /** Indicador de rendimiento (F3): FPS, tiempo de simulación y elementos dibujados. */
+  private updatePerf(): void {
+    const show = (this.registry.get(REGISTRY_SETTINGS) as UserSettings).showPerf;
+    this.perfText.setVisible(show);
+    if (!show) return;
+    const game = this.scene.get(SceneKeys.Game) as GameScene;
+    const { visible, total } = game.worldStats();
+    this.perfText.setText(
+      `FPS ${this.game.loop.actualFps.toFixed(0)} · simulación ${game.metrics.simMs.toFixed(2)} ms (pico ${game.metrics.worstSimMs.toFixed(1)}) · mapa ${visible}/${total}`,
+    );
   }
 
   /** Infusión y estados activos del jugador, con su tiempo restante. */

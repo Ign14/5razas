@@ -114,3 +114,18 @@ export function selectDialogue(npc: NpcDefinition, quests: QuestLog): string {
   }
   throw new Error(`El PNJ "${npc.id}" no tiene diálogo por defecto`);
 }
+
+/**
+ * Indicador sobre un PNJ: "?" si tiene una misión lista para entregar, "!" si ofrece una nueva,
+ * o null. Se basa en las misiones que mencionan sus reglas de diálogo.
+ */
+export function npcQuestIndicator(npc: NpcDefinition, quests: QuestLog): '!' | '?' | null {
+  let mark: '!' | null = null;
+  for (const rule of npc.dialogue) {
+    if (!rule.when) continue;
+    const status = quests.status(rule.when.quest);
+    if (status === 'completed') return '?';
+    if (status === 'available') mark = '!';
+  }
+  return mark;
+}

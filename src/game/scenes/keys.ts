@@ -8,6 +8,8 @@ export const SceneKeys = {
   Dialogue: 'dialogue',
   Journal: 'journal',
   Pause: 'pause',
+  Map: 'map',
+  Options: 'options',
 } as const;
 
 export const REGISTRY_CONTENT = 'content';

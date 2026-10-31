@@ -18,7 +18,9 @@ export const TILE_ORIGIN_Y = (TILE_TEXTURE_H - DIAMOND_H / 2) / TILE_TEXTURE_H;
 export const PLAYER_TEXTURE = 'ph-player';
 export const PLAYER_FRAME_W = 32;
 export const PLAYER_FRAME_H = 48;
-const PLAYER_FRAMES_PER_DIR = 4;
+/** Fotogramas por dirección: 0–3 caminar, 4–5 ataque (preparación y golpe), 6 lanzamiento. */
+const PLAYER_FRAMES_PER_DIR = 7;
+type PlayerPose = 'walk' | 'windup' | 'strike' | 'cast';
 /** Origen en los pies del personaje. */
 export const PLAYER_ORIGIN_Y = 44 / PLAYER_FRAME_H;
 
@@ -48,8 +50,12 @@ function drawDiamond(ctx: CanvasRenderingContext2D, top: number, color: string, 
   }
 }
 
+/** Los tiles planos (suelo, agua) usan una textura del tamaño exacto del rombo: 64 × 32. */
+export const FLAT_TEXTURE_H = DIAMOND_H;
+export const isFlatShape = (def: TileDefinition) => def.shape === 'flat' || def.shape === 'water';
+
 function drawTile(ctx: CanvasRenderingContext2D, def: TileDefinition, seed: number) {
-  const base = TILE_TEXTURE_H - DIAMOND_H;
+  const base = isFlatShape(def) ? 0 : TILE_TEXTURE_H - DIAMOND_H;
   switch (def.shape) {
     case 'flat':
       drawDiamond(ctx, base, def.color, seed, 12);
@@ -97,7 +103,7 @@ function drawTile(ctx: CanvasRenderingContext2D, def: TileDefinition, seed: numb
   }
 }
 
-function drawPlayerFrame(ctx: CanvasRenderingContext2D, ox: number, oy: number, angle: number, frame: number) {
+function drawPlayerFrame(ctx: CanvasRenderingContext2D, ox: number, oy: number, angle: number, frame: number, pose: PlayerPose = 'walk') {
   const px = (x: number, y: number, w: number, h: number, c: string) => {
     ctx.fillStyle = c;
     ctx.fillRect(ox + x, oy + y, w, h);
@@ -127,6 +133,33 @@ function drawPlayerFrame(ctx: CanvasRenderingContext2D, ox: number, oy: number, 
   }
   // Marca PROVISIONAL.
   px(15, 22 - bob, 2, 6, '#f2d16b');
+  if (pose === 'walk') return;
+  // Arma (Hoja de corteza): en preparación, hacia atrás; al golpear, extendida hacia la orientación.
+  const swing = pose === 'windup' ? angle + Math.PI * 0.75 : angle;
+  const reach = pose === 'strike' ? 15 : pose === 'cast' ? 0 : 9;
+  if (pose === 'cast') {
+    // Brazos en alto.
+    px(7, 10, 3, 10, '#d9a77a');
+    px(22, 10, 3, 10, '#d9a77a');
+    px(6, 7, 5, 3, '#9fe870');
+    px(21, 7, 5, 3, '#9fe870');
+    return;
+  }
+  const hx = 16 + Math.cos(angle) * 6;
+  const hy = 24 + Math.sin(angle) * 3;
+  for (let i = 0; i <= reach; i++) {
+    const x = Math.round(hx + Math.cos(swing) * i);
+    const y = Math.round(hy + Math.sin(swing) * i * 0.5 - (pose === 'windup' ? i * 0.4 : 0));
+    px(x, y, 2, 2, i < 3 ? '#5b3b22' : '#e6dcc0');
+  }
+  if (pose === 'strike') {
+    // Estela del golpe.
+    ctx.fillStyle = 'rgba(242,240,230,0.5)';
+    for (let k = 1; k <= 4; k++) {
+      const a = swing - k * 0.25;
+      ctx.fillRect(ox + Math.round(hx + Math.cos(a) * reach), oy + Math.round(hy + Math.sin(a) * reach * 0.5), 2, 2);
+    }
+  }
 }
 
 /** Genera todas las texturas provisionales. Idempotente. */
@@ -136,7 +169,7 @@ export function createPlaceholderTextures(scene: Phaser.Scene, catalog: TileCata
     const key = tileTextureKey(def.id);
     seed++;
     if (scene.textures.exists(key)) continue;
-    const canvas = scene.textures.createCanvas(key, TILE_TEXTURE_W, TILE_TEXTURE_H);
+    const canvas = scene.textures.createCanvas(key, TILE_TEXTURE_W, isFlatShape(def) ? FLAT_TEXTURE_H : TILE_TEXTURE_H);
     if (!canvas) throw new Error(`No se pudo crear la textura ${key}`);
     drawTile(canvas.context, def, seed);
     canvas.refresh();
@@ -151,8 +184,9 @@ export function createPlaceholderTextures(scene: Phaser.Scene, catalog: TileCata
     );
     if (!canvas) throw new Error('No se pudo crear la textura del jugador');
     DIRECTIONS.forEach((dir, row) => {
+      const poses: readonly PlayerPose[] = ['walk', 'walk', 'walk', 'walk', 'windup', 'strike', 'cast'];
       for (let f = 0; f < cols; f++) {
-        drawPlayerFrame(canvas.context, f * PLAYER_FRAME_W, row * PLAYER_FRAME_H, directionAngle(dir), f);
+        drawPlayerFrame(canvas.context, f * PLAYER_FRAME_W, row * PLAYER_FRAME_H, directionAngle(dir), f < 4 ? f : 0, poses[f]);
         canvas.add(row * cols + f, 0, f * PLAYER_FRAME_W, row * PLAYER_FRAME_H, PLAYER_FRAME_W, PLAYER_FRAME_H);
       }
     });
@@ -166,6 +200,16 @@ export function createPlayerAnimations(scene: Phaser.Scene): void {
     const first = row * PLAYER_FRAMES_PER_DIR;
     if (!scene.anims.exists(`player-idle-${dir}`)) {
       scene.anims.create({ key: `player-idle-${dir}`, frames: [{ key: PLAYER_TEXTURE, frame: first }] });
+    }
+    if (!scene.anims.exists(`player-attack-${dir}`)) {
+      scene.anims.create({
+        key: `player-attack-${dir}`,
+        frames: [4, 5, 5].map((f) => ({ key: PLAYER_TEXTURE, frame: first + f })),
+        frameRate: 14,
+      });
+    }
+    if (!scene.anims.exists(`player-cast-${dir}`)) {
+      scene.anims.create({ key: `player-cast-${dir}`, frames: [{ key: PLAYER_TEXTURE, frame: first + 6 }] });
     }
     if (!scene.anims.exists(`player-walk-${dir}`)) {
       scene.anims.create({

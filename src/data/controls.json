@@ -15,5 +15,7 @@
   "interact": ["E"],
   "alchemy": ["K"],
   "journal": ["J"],
-  "menu": ["ESC"]
+  "map": ["M"],
+  "menu": ["ESC"],
+  "perf": ["F3"]
 }

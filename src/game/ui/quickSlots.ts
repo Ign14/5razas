@@ -16,6 +16,7 @@ export class QuickSlotsView {
   private readonly keys: readonly string[];
   private x = 0;
   private y = 0;
+  private signature = '';
 
   constructor(scene: Phaser.Scene, keys: readonly string[]) {
     this.keys = keys;
@@ -26,6 +27,11 @@ export class QuickSlotsView {
       this.keyLabels.push(scene.add.text(0, 0, k, { ...TEXT, fontSize: '10px', color: '#f2d16b' }));
     });
     this.hint = scene.add.text(0, 0, 'I: inventario', { ...TEXT, fontSize: '11px', color: '#a9a596' }).setOrigin(1, 1);
+  }
+
+  setKeyLabels(labels: readonly string[], inventoryKey: string): void {
+    this.keyLabels.forEach((t, i) => t.setText(labels[i] ?? ''));
+    this.hint.setText(`${inventoryKey}: inventario`);
   }
 
   layout(right: number, bottom: number): void {
@@ -42,8 +48,11 @@ export class QuickSlotsView {
   }
 
   update(character: PlayerCharacter, now: number): void {
-    const g = this.g.clear();
     const cd = character.itemCooldownRatio(now);
+    const sig = `${Math.ceil(cd * 20)}|${this.x},${this.y}|` + character.quickSlots.map((id) => (id ? `${id}:${character.inventory.count(id)}` : '-')).join(',');
+    if (sig === this.signature) return;
+    this.signature = sig;
+    const g = this.g.clear();
     this.keys.forEach((_, i) => {
       const sx = this.x + i * (SLOT + GAP);
       const itemId = character.quickSlots[i] ?? null;

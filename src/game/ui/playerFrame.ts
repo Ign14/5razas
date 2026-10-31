@@ -12,6 +12,8 @@ export class PlayerFrame {
   private readonly levelText: Phaser.GameObjects.Text;
   private readonly x: number;
   private readonly y: number;
+  /** Último estado dibujado: solo se redibuja si cambia. */
+  private signature = '';
 
   constructor(scene: Phaser.Scene, x: number, y: number, playerName: string, professionName: string) {
     this.x = x;
@@ -23,6 +25,9 @@ export class PlayerFrame {
   }
 
   update(c: Combatant, character: PlayerCharacter): void {
+    const sig = `${Math.ceil(c.hp)}|${Math.floor(c.energy)}|${c.stats.life}|${c.stats.energy}|${c.level}|${character.xp}`;
+    if (sig === this.signature) return;
+    this.signature = sig;
     const { x, y } = this;
     const g = this.g.clear();
     g.fillStyle(0x0b0d12, 0.8).fillRoundedRect(x, y, W + 52, 88, 6);

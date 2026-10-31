@@ -8,6 +8,7 @@ import {
   createPlayerAnimations,
 } from '../rendering/placeholderTextures.ts';
 import { createItemIcons } from '../rendering/itemIcons.ts';
+import { defaultSettings, REGISTRY_SETTINGS } from '../input/settings.ts';
 import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
 
 /** Valida el contenido y prepara recursos compartidos. Si los datos son inválidos, lo muestra. */
@@ -20,6 +21,7 @@ export class BootScene extends Phaser.Scene {
     try {
       const content = loadContent();
       this.registry.set(REGISTRY_CONTENT, content);
+      this.registry.set(REGISTRY_SETTINGS, defaultSettings(content.controlsRaw));
       createPlaceholderTextures(this, content.catalog);
       createPlayerAnimations(this);
       createCreatureTextures(this, [...content.creatures.all.values()].map((c) => c.spriteAtlas));

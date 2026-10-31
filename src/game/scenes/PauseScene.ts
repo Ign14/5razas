@@ -22,7 +22,7 @@ export class PauseScene extends PanelScene {
   }
 
   protected render(): void {
-    const { x, y } = this.panel(300, 230);
+    const { x, y } = this.panel(300, 266);
     this.text(x + 20, y + 16, 'Pausa', 18, '#e8c872');
     this.button(x + 20, y + 56, 'Continuar', () => { this.close(); }, 260);
     this.button(x + 20, y + 92, 'Guardar partida', () => {
@@ -33,12 +33,16 @@ export class PauseScene extends PanelScene {
         if (this.scene.isActive()) this.render();
       });
     }, 260);
-    this.button(x + 20, y + 128, 'Salir al menú principal', () => {
+    this.button(x + 20, y + 128, 'Opciones', () => {
+      this.close();
+      this.scene.launch(SceneKeys.Options, { session: this.game$ });
+    }, 260);
+    this.button(x + 20, y + 164, 'Salir al menú principal', () => {
       this.close();
       this.scene.stop(SceneKeys.Game);
       this.scene.start(SceneKeys.Menu);
     }, 260);
-    if (this.status) this.text(x + 20, y + 170, this.status, 12, '#9fe870');
-    this.text(x + 20, y + 196, 'El juego también se guarda automáticamente.', 10, '#7a7f8c');
+    if (this.status) this.text(x + 20, y + 206, this.status, 12, '#9fe870');
+    this.text(x + 20, y + 232, 'El juego también se guarda automáticamente.', 10, '#7a7f8c');
   }
 }

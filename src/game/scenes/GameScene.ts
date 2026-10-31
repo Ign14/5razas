@@ -11,7 +11,8 @@ import { DropView } from '../entities/dropView.ts';
 import { NpcView } from '../entities/npcView.ts';
 import { PlantView } from '../entities/plantView.ts';
 import { PlayerView } from '../entities/playerView.ts';
-import { PlayerInput, parseBindings } from '../input/playerInput.ts';
+import { PlayerInput } from '../input/playerInput.ts';
+import { REGISTRY_SETTINGS, type UserSettings } from '../input/settings.ts';
 import { CombatEffects } from '../rendering/combatEffects.ts';
 import { OVERLAY_DEPTH, sortedDepth } from '../rendering/depth.ts';
 import { OBSTACLE_TEXTURE } from '../rendering/placeholderTextures.ts';
@@ -21,7 +22,7 @@ import { GameSession } from '../session.ts';
 import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
 
 /** Pantallas superpuestas: solo una abierta a la vez; todas pausan la simulación. */
-const OVERLAYS = [SceneKeys.Inventory, SceneKeys.Alchemy, SceneKeys.Journal, SceneKeys.Pause, SceneKeys.Dialogue] as const;
+const OVERLAYS = [SceneKeys.Inventory, SceneKeys.Alchemy, SceneKeys.Journal, SceneKeys.Map, SceneKeys.Pause, SceneKeys.Dialogue, SceneKeys.Options] as const;
 type OverlayKey = (typeof OVERLAYS)[number];
 interface Closable {
   close(): void;
@@ -42,6 +43,8 @@ export class GameScene extends Phaser.Scene {
   private night!: Phaser.GameObjects.Rectangle;
   private content!: GameContent;
   private save: SaveData | null = null;
+  /** Métricas de rendimiento: media móvil del tiempo de simulación por fotograma (ms). */
+  readonly metrics = { simMs: 0, worstSimMs: 0 };
 
   constructor() {
     super(SceneKeys.Game);
@@ -78,7 +81,14 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(OVERLAY_DEPTH - 5);
     for (const c of this.session.sim.creatures.values()) this.creatureViews.set(c.id, new CreatureView(this, c, map.iso));
-    this.playerInput = new PlayerInput(this, parseBindings(content.controlsRaw));
+    this.playerInput = new PlayerInput(this, this.settings().bindings);
+    // Los cambios de teclas desde Opciones se aplican al momento.
+    const onSettings = () => {
+      this.playerInput.destroy();
+      this.playerInput = new PlayerInput(this, this.settings().bindings);
+    };
+    this.registry.events.on(`changedata-${REGISTRY_SETTINGS}`, onSettings);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.registry.events.off(`changedata-${REGISTRY_SETTINGS}`, onSettings));
 
     const camera = this.cameras.main;
     camera.setBackgroundColor('#0d0f14');
@@ -88,7 +98,7 @@ export class GameScene extends Phaser.Scene {
     camera.setRoundPixels(true);
 
     this.scene.launch(SceneKeys.Hud, { session: this.session });
-    exposeDebug(this.session);
+    exposeDebug(this.session, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scene.stop(SceneKeys.Hud);
       for (const key of OVERLAYS) this.scene.stop(key);
@@ -99,25 +109,55 @@ export class GameScene extends Phaser.Scene {
     const sim = this.session.sim;
     // La lectura se hace siempre, para consumir pulsaciones y clics hechos sobre el inventario.
     const cmd = this.playerInput.read(sim.player.position);
+    if (this.playerInput.perfPressed()) this.registry.set(REGISTRY_SETTINGS, { ...this.settings(), showPerf: !this.settings().showPerf });
     const overlay = this.playerInput.overlayPressed();
+    // Mientras se reasignan teclas o se conversa, solo Esc actúa (las demás teclas son de esa pantalla).
+    const modal = this.scene.isActive(SceneKeys.Options) || this.scene.isActive(SceneKeys.Dialogue);
     if (overlay === 'menu') this.escape();
-    else if (overlay) this.toggleOverlay(({ inventory: SceneKeys.Inventory, alchemy: SceneKeys.Alchemy, journal: SceneKeys.Journal } as const)[overlay]);
+    else if (modal) {
+      this.syncViews();
+      return;
+    }
+    else if (overlay) this.toggleOverlay(({ inventory: SceneKeys.Inventory, alchemy: SceneKeys.Alchemy, journal: SceneKeys.Journal, map: SceneKeys.Map } as const)[overlay]);
+    const t0 = performance.now();
     const events = this.session.paused ? this.session.flush() : this.session.update(deltaMs / 1000, cmd);
+    const simMs = performance.now() - t0;
+    this.metrics.simMs = this.metrics.simMs * 0.95 + simMs * 0.05;
+    this.metrics.worstSimMs = Math.max(this.metrics.worstSimMs * 0.999, simMs);
     for (const e of events) this.handleEvent(e);
+    this.syncViews();
+  }
+
+  private settings(): UserSettings {
+    return this.registry.get(REGISTRY_SETTINGS) as UserSettings;
+  }
+
+  /** Actualiza la representación a partir del estado de la simulación. */
+  private syncViews(): void {
+    const sim = this.session.sim;
 
     this.playerView.sync(this.session.player, sim.player, sim.time);
     this.world.updateOcclusion(sim.player.position);
+    this.world.cull(this.cameras.main.worldView);
     const hour = sim.hour;
     for (const [id, view] of this.plantViews) {
       const node = sim.plants.get(id);
       if (node) view.sync(sim.plants.isReady(node, sim.time, hour));
     }
-    this.night.setSize(this.scale.width, this.scale.height).setFillStyle(0x0a1030, darknessAt(hour) * 0.5);
+    // De día la capa no se dibuja (aun transparente ocuparía toda la pantalla).
+    const darkness = darknessAt(hour);
+    this.night.setVisible(darkness > 0);
+    if (darkness > 0) this.night.setSize(this.scale.width, this.scale.height).setFillStyle(0x0a1030, darkness * 0.5);
     for (const [id, view] of this.creatureViews) {
       const c = sim.creatures.get(id);
       if (c) view.sync(c, sim.time);
     }
     for (const npc of this.npcViews) npc.sync(sim.quests);
+  }
+
+  /** Elementos del mapa dibujados frente al total (culling). */
+  worldStats(): { visible: number; total: number } {
+    return this.world.stats();
   }
 
   private activeOverlay(): OverlayKey | null {
@@ -156,6 +196,11 @@ export class GameScene extends Phaser.Scene {
         break;
       }
       case 'ability': {
+        if (e.casterId === PLAYER_ID) {
+          const a = e.ability;
+          const busy = (a.dash?.duration ?? 0) + a.windup + Math.max(0, a.hits - 1) * a.hitInterval + 0.15;
+          this.playerView.act(a.animation, sim.time, busy);
+        }
         // Telegrafía de ataques enemigos durante su preparación.
         if (e.casterId !== PLAYER_ID && e.ability.windup > 0) {
           const area = predictArea(e.ability, e.origin, e.aim);
@@ -248,7 +293,7 @@ export class GameScene extends Phaser.Scene {
 }
 
 /** Gancho de solo lectura para pruebas E2E y depuración manual desde la consola. */
-function exposeDebug(session: GameSession): void {
+function exposeDebug(session: GameSession, scene: GameScene): void {
   const sim = session.sim;
   window.__5RAZAS__ = {
     player: () => ({
@@ -280,5 +325,6 @@ function exposeDebug(session: GameSession): void {
       return b ? { id: b.id, x: b.combatant.position.x, y: b.combatant.position.y, hp: b.combatant.hp, phase: b.boss?.phase ?? 0 } : null;
     },
     save: () => session.save('manual'),
+    perf: () => ({ fps: scene.game.loop.actualFps, simMs: scene.metrics.simMs, worstSimMs: scene.metrics.worstSimMs, ...scene.worldStats() }),
   };
 }

@@ -151,3 +151,16 @@ futuro de esquema añade una función en `SAVE_MIGRATIONS` y sube `SAVE_SCHEMA_V
 ## D-036 — Esc centralizado en GameScene
 Las pantallas superpuestas no manejan Esc por su cuenta: el mismo evento las cerraba y luego abría el menú de pausa.
 GameScene decide: si hay una pantalla abierta la cierra; si no, abre la pausa.
+
+## D-037 — Culling por bloques con intersección exacta (2026-10-31)
+Los bloques de 8 × 8 con rectángulo envolvente dibujaban el 66 % del mapa (un rombo ocupa la mitad de su
+rectángulo). Con bloques de 4 × 4 y prueba exacta rombo–rectángulo (norma L1) se dibuja ≈ 42 %.
+
+## D-038 — Configuración del usuario separada de la partida
+Las teclas y opciones se guardan en IndexedDB con su propia clave y se aplican a todas las partidas (como en la
+mayoría de juegos). `SavePayload.settings` queda reservado para ajustes propios de una partida.
+
+## D-039 — Vida del Centinela ajustada con un banco de simulación
+Con 900 de vida, un bot sin esquivar ganaba siempre desde el nivel 4 en ~18 s. Con 1.300: pierde a los niveles 4–5,
+gana la mitad de las veces al 6 (nivel esperado al llegar) y casi siempre desde el 7. Un jugador que esquiva las
+telegrafías lo tendrá algo más fácil. Valor provisional, a revisar con pruebas de juego reales.

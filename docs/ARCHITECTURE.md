@@ -35,6 +35,7 @@ src/
     quests/    Catálogo de misiones y QuestLog (estados, señales, entrega, serialización).
     narrative/ PNJ y diálogos por datos; selección de diálogo según el estado de las misiones.
     persistence/ Formato de guardado versionado, suma de verificación, validación y migraciones.
+    input/     Reasignación de teclas con detección de conflictos y combinación con valores predeterminados.
     simulation/ WorldSimulation (orquestación: jugador, combate, botín, interacción, misiones, guardado),
                CreaturePopulation (aparición, horarios, IA, selección de habilidades, jefes) y
                contentValidation (referencias cruzadas entre archivos).
@@ -53,7 +54,9 @@ src/
                ranuras rápidas Q/F, notificaciones laterales, textos de interfaz.
     scenes/InventoryScene  Inventario y equipamiento (pausa la simulación).
     scenes/AlchemyScene    Mortero, propiedades combinadas y libro de descubrimientos (pausa la simulación).
-    scenes/DialogueScene, JournalScene (J), PauseScene (Esc)  Pantallas superpuestas basadas en ui/panel.ts.
+    scenes/DialogueScene, JournalScene (J), PauseScene (Esc), MapScene (M), OptionsScene
+               Pantallas superpuestas basadas en ui/panel.ts; GameScene gestiona cuál está abierta.
+    input/settings.ts  Configuración del usuario (teclas, indicador de rendimiento) guardada en IndexedDB.
     persistence/ IndexedDbSaveStorage (API nativa, sin dependencias).
     session.ts Partida en curso: WorldSimulation + exploración + suscripción a eventos (sin Phaser).
     content.ts Carga y validación del contenido.
@@ -190,6 +193,19 @@ Así el combate, la progresión y la alquimia futuros se podrán probar sin Phas
   estructura y aplica `SAVE_MIGRATIONS` en cadena; `WorldSimulation.restore` descarta referencias desconocidas con
   advertencias. Guardado manual (menú de pausa), automático cada 60 s y en hitos (entrega de misión, jefe, nivel).
   El menú principal ofrece "Continuar partida" si existe un guardado válido.
+
+## Pulido (2026-10-31)
+
+- **Rendimiento**: culling por bloques de 4 × 4 celdas, texturas de suelo ajustadas, HUD con redibujado
+  condicional; indicador F3 y escenario de referencia automatizado (ver `docs/PERFORMANCE.md`).
+- **Mapa ampliado (M)** y marcadores en el minimapa (§3.4): PNJ (con misión pendiente), objetivos de misiones
+  activas y jefe detectado (solo si su celda fue explorada). `computeMarkers` es compartido por ambos.
+- **Animaciones del personaje** según el campo `animation` de cada habilidad: `attack` (preparación + golpe con
+  estela), `spin` (gira por las 8 orientaciones), `cast` (brazos en alto) y `dash` (pasos acelerados).
+- **Opciones**: teclas configurables desde el juego (sin conflictos; Esc reservada), indicador de rendimiento,
+  restaurar valores. Se aplican al momento (el registro de Phaser notifica a GameScene y al HUD) y se guardan como
+  configuración del usuario, independiente de la partida. Las etiquetas del HUD reflejan las teclas actuales.
+- **Balance**: `npm run balance` enfrenta un bot al jefe en varios niveles y semillas (`tests/balance/`).
 
 ## Sistema de coordenadas
 

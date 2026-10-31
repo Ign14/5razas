@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { loadSave, type SaveData } from '../../core/persistence/saveGame.ts';
 import { IndexedDbSaveStorage, SAVE_SLOT } from '../persistence/indexedDbStorage.ts';
-import { SceneKeys } from './keys.ts';
+import type { GameContent } from '../content.ts';
+import { defaultSettings, readSettings, REGISTRY_SETTINGS } from '../input/settings.ts';
+import { REGISTRY_CONTENT, SceneKeys } from './keys.ts';
 
 const TEXT = { fontFamily: 'monospace' } as const;
 
@@ -23,7 +25,13 @@ export class MenuScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off('resize', undefined, this));
     this.input.keyboard?.on('keydown-ENTER', () => { this.start(this.save); });
 
-    void new IndexedDbSaveStorage()
+    const storage = new IndexedDbSaveStorage();
+    const content = this.registry.get(REGISTRY_CONTENT) as GameContent;
+    void storage
+      .loadSettings()
+      .then((raw) => { this.registry.set(REGISTRY_SETTINGS, readSettings(raw, defaultSettings(content.controlsRaw))); })
+      .catch((error: unknown) => { console.error(error); });
+    void storage
       .load(SAVE_SLOT)
       .then((raw) => {
         if (raw === null) {

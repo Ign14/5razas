@@ -41,11 +41,23 @@ export class IndexedDbSaveStorage implements SaveStorage {
     await request(db.transaction(STORE, 'readwrite').objectStore(STORE).put(data, slot));
   }
 
+  /** Configuración del usuario (teclas, indicadores), compartida por todas las partidas. */
+  async loadSettings(): Promise<unknown> {
+    return this.load(SETTINGS_KEY);
+  }
+
+  async saveSettings(settings: unknown): Promise<void> {
+    const db = await this.open();
+    await request(db.transaction(STORE, 'readwrite').objectStore(STORE).put(settings, SETTINGS_KEY));
+  }
+
   async remove(slot: string): Promise<void> {
     const db = await this.open();
     await request(db.transaction(STORE, 'readwrite').objectStore(STORE).delete(slot));
   }
 }
+
+const SETTINGS_KEY = 'settings';
 
 /** Ranura única del vertical slice. */
 export const SAVE_SLOT = 'slot1';

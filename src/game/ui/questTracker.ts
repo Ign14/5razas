@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { npcQuestIndicator, type NarrativeCatalog } from '../../core/narrative/dialogue.ts';
 import type { QuestLog } from '../../core/quests/quests.ts';
 
 const TEXT = { fontFamily: 'monospace', color: '#e6e1cf', stroke: '#000', strokeThickness: 3 } as const;
@@ -15,16 +16,20 @@ export class QuestTracker {
     this.text.setPosition(x, y);
   }
 
-  update(quests: QuestLog): void {
+  update(quests: QuestLog, narrative: NarrativeCatalog): void {
     const lines: string[] = [];
     for (const q of quests.active().slice(0, 2)) {
       const status = quests.status(q.id);
-      lines.push(status === 'completed' ? `◆ ${q.name} — vuelve con el Vigía` : `◆ ${q.name}`);
+      const giver = narrative.npcs.get(q.giver)?.name ?? q.giver;
+      lines.push(status === 'completed' ? `◆ ${q.name} — entrega: ${giver} (E)` : `◆ ${q.name}`);
       if (status === 'active') {
         for (const o of q.objectives) lines.push(`   ${o.description}: ${quests.progress(q.id, o.id)}/${o.count}`);
       }
     }
-    if (lines.length === 0 && quests.status('senales-en-el-bosque') === 'available') lines.push('◆ Habla con el Vigía del Sendero (E)');
+    if (lines.length === 0) {
+      const offering = [...narrative.npcs.values()].find((n) => npcQuestIndicator(n, quests) === '!');
+      if (offering) lines.push(`◆ Conversa: ${offering.name} (E)`);
+    }
     this.text.setText(lines.join('\n'));
   }
 }

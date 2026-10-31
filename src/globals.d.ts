@@ -14,6 +14,7 @@ interface FiveRazasDebug {
   quests(): Record<string, { state: string; progress: Record<string, number> }>;
   boss(): { id: string; x: number; y: number; hp: number; phase: number } | null;
   save(): Promise<boolean>;
+  perf(): { fps: number; simMs: number; worstSimMs: number; visible: number; total: number };
   drops(): { itemId: string; x: number; y: number }[];
   hour(): number;
   plants(): { id: string; plantId: string; x: number; y: number; ready: boolean }[];

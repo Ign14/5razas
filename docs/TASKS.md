@@ -1,5 +1,16 @@
 # Tareas
 
+## Hecho — 2026-10-31 (pulido)
+
+- [x] Escenario de referencia de rendimiento automatizado y documentado (`docs/PERFORMANCE.md`).
+- [x] Culling por bloques; texturas de suelo ajustadas; HUD con redibujado condicional; indicador F3.
+- [x] Mapa ampliado (M) con niebla, leyenda y marcadores; marcadores en el minimapa.
+- [x] Animaciones de ataque, giro, lanzamiento y carga del personaje.
+- [x] Pantalla de opciones: teclas configurables con detección de conflictos, guardadas por usuario.
+- [x] Banco de balance del jefe (`npm run balance`) y ajuste de su vida (900 → 1.300).
+- [x] Pruebas: 149 unitarias, 10 E2E (incluye rendimiento y reasignación de teclas).
+
+
 ## Hecho — 2026-10-31 (Fase 6: jefe, narrativa y guardado) — vertical slice jugable de inicio a fin
 
 - [x] Refactor: `CreaturePopulation` y `contentValidation` extraídos de `WorldSimulation`.
@@ -91,21 +102,17 @@
 ## Pendiente — siguiente
 
 - [ ] **Revisión humana de la narrativa** (D-033) antes de asociarla a un pueblo o territorio cultural.
-- [ ] Prueba de rendimiento definida (§14, criterio 18) y culling de objetos.
-- [ ] Pantalla de opciones (teclas configurables, escala) que use `settings` del guardado.
-- [ ] Animaciones de ataque del personaje y arte definitivo (evaluar Isometric Stone Soup, CC0).
+- [ ] Medir FPS en un equipo con GPU real (F3) y anotarlo en `docs/PERFORMANCE.md`.
+- [ ] Pruebas de juego reales para confirmar la dificultad del jefe y el ritmo de progresión.
+- [ ] Arte definitivo (evaluar Isometric Stone Soup, CC0) y audio (no hay sonido todavía).
 - [ ] Reordenar el inventario arrastrando objetos (hoy la API `swap` existe pero no hay interfaz).
 - [ ] Descartar objetos desde el inventario.
-- [ ] Animaciones de ataque propias del personaje (hoy solo idle/caminar + efectos).
 - [ ] Separación entre criaturas (evitar que se superpongan).
 
 ## Pendiente — Fase 1
 
 - [ ] Decidir fuente de verdad del mapa: seguir con el generador o editar en Tiled (requiere exportar PNG de los placeholders a `public/placeholder/`).
-- [ ] Culling / chunks de objetos y prueba de rendimiento (escenario de referencia a 60 FPS).
 - [ ] Capas restantes de §3.2 (elevaciones, vegetación inferior, elementos superiores) cuando haya contenido que las use.
-- [ ] Minimapa ampliable (tecla M) — previsto en §3.4.
-- [ ] Teclas configurables desde UI (hoy solo por JSON).
 - [ ] Evaluar arte CC0 "Isometric Stone Soup" (64 × 32) como reemplazo de placeholders (ver RESEARCH).
 
 ## Problemas conocidos
