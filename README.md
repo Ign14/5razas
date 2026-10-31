@@ -2,6 +2,8 @@
 
 RPG isométrico en pixel art (TypeScript + Phaser 3 + Vite). Prototipo en desarrollo hacia el vertical slice 0.1.0.
 
+**Jugar en línea:** https://ign14.github.io/5razas/
+
 ## Requisitos
 
 Node ≥ 22.12.
@@ -19,6 +21,7 @@ Node ≥ 22.12.
 | `npm run gen:map` | Regenera `src/data/maps/bosque-inicial.json` |
 | `npm run analyze:map` | Conectividad y vista ASCII del mapa |
 | `npm run balance` | Banco de balance del jefe (simulación, sin navegador) |
+| `npm run deploy` | Verifica, compila y publica `dist/` en la rama `gh-pages` (GitHub Pages) |
 
 ## Controles
 

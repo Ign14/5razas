@@ -1,8 +1,8 @@
 name: Deploy to GitHub Pages
 
+# Manual mientras GitHub Actions no esté disponible en la cuenta; el despliegue habitual es `npm run deploy`
+# (rama gh-pages). Para usarlo: Settings → Pages → Source: GitHub Actions.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
